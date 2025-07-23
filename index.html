@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>광고 프로젝트 관리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <div id="app" class="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
+        <!-- 로딩 화면 -->
+        <div id="loading" class="text-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="text-gray-600 mt-4">데이터를 불러오는 중...</p>
+        </div>
+
+        <!-- 메인 앱 -->
+        <div id="mainApp" class="hidden">
+            <!-- 헤더 -->
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">광고 프로젝트 관리</h1>
+                <p class="text-gray-600">광고주별 버킷으로 업무를 체계적으로 관리하세요</p>
+            </div>
+
+            <!-- 오늘 마감 알림 -->
+            <div id="todayDeadlines" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg hidden">
+                <div class="flex items-center mb-2">
+                    <svg class="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <h3 class="text-red-700 font-semibold">오늘 마감인 업무</h3>
+                </div>
+                <div id="todayDeadlinesList"></div>
+            </div>
+
+            <!-- 뷰 전환 탭 -->
+            <div class="mb-6">
+                <div class="flex border-b border-gray-200">
+                    <button
+                        id="bucketsViewBtn"
+                        class="px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600"
+                    >
+                        버킷 뷰
+                    </button>
+                    <button
+                        id="todoViewBtn"
+                        class="px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+                    >
+                        투두리스트
+                    </button>
+                </div>
+            </div>
+
+            <!-- 새 버킷 추가 버튼 -->
+            <div id="addBucketSection" class="mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <button
+                        id="addBucketBtn"
+                        class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        ➕ 새 광고주 추가
+                    </button>
+                    <button
+                        id="sortBtn"
+                        class="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                        <span>📅</span>
+                        <span id="sortText">마감일 오름차순</span>
+                    </button>
+                </div>
+                
+                <!-- 추가 폼 (숨김) -->
+                <div id="addBucketForm" class="bg-white p-6 rounded-lg shadow hidden">
+                    <h3 class="text-lg font-semibold mb-4">새 광고주 정보</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">광고주명 *</label>
+                            <input type="text" id="bucketNameInput" placeholder="광고주명을 입력하세요" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">단가 (원)</label>
+                            <input type="text" id="unitPriceInput" placeholder="예: 1,000,000" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">수량</label>
+                            <input type="text" id="quantityInput" placeholder="예: 100회 노출" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">계약조건 및 기타사항</label>
+                        <textarea id="contractTermsInput" placeholder="계약 조건 및 기타사항을 입력하세요..." rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="confirmAddBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">추가</button>
+                        <button id="cancelAddBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">취소</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 투두리스트 뷰 -->
+            <div id="todoView" class="bg-white rounded-lg shadow-md p-6 hidden">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">전체 액션아이템</h2>
+                <div id="todoList" class="space-y-3">
+                    <!-- 투두 아이템들이 여기에 표시됩니다 -->
+                </div>
+                <div id="todoEmpty" class="text-gray-500 text-center py-8 hidden">등록된 액션아이템이 없습니다.</div>
+            </div>
+
+            <!-- 버킷 뷰 -->
+            <div id="bucketsView">
+                <div id="bucketsContainer" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <!-- 버킷들이 여기에 동적으로 추가됩니다 -->
+                </div>
+
+                <!-- 빈 상태 메시지 -->
+                <div id="emptyState" class="text-center py-16">
+                    <div class="text-6xl mb-4">📋</div>
+                    <p class="text-gray-500 text-xl mb-2">아직 등록된 광고주가 없습니다.</p>
+                    <p class="text-gray-400">새 광고주를 추가해서 업무 관리를 시작하세요.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase 설정
+        const SUPABASE_URL = 'https://nkrizaxxgerkpimggxug.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rcml6YXh4Z2Vya3BpbWdneHVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNTA1MjUsImV4cCI6MjA2ODgyNjUyNX0.hcbiCfwFDfj2sRDHoj3oBBcmXLyy_CavryDKstpXGGs';
+        
+        // Supabase 클라이언트 초기화
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 전역 변수
+        let buckets = [];
+        let userId = localStorage.getItem('userId') || 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('userId', userId);
+        let currentView = 'buckets';
+        let sortOrder = 'asc';
+        let collapsedBuckets = {};
+        let collapsedContracts = {};
+
+        // 단계별 기본 액션 아이템
+        const defaultActionItems = {
+            '대기': ['광고주 요구사항 수집', '예산 및 일정 확정', '계약서 검토'],
+            '진행_광고제작': ['크리에이티브 컨셉 기획', '디자인 시안 제작', '광고주 피드백 반영', '최종 소재 승인'],
+            '진행_광고운영': ['광고 계정 세팅', '캠페인 런칭', '일일 성과 모니터링', '최적화 작업'],
+            '진행_매출정산': ['최종 성과 리포트 작성', '매출 정산', '광고주 결과 보고']
+        };
+
+        // DOM 요소들
+        const loading = document.getElementById('loading');
+        const mainApp = document.getElementById('mainApp');
+        const bucketsViewBtn = document.getElementById('bucketsViewBtn');
+        const todoViewBtn = document.getElementById('todoViewBtn');
+        const addBucketSection = document.getElementById('addBucketSection');
+        const addBucketBtn = document.getElementById('addBucketBtn');
+        const addBucketForm = document.getElementById('addBucketForm');
+        const bucketNameInput = document.getElementById('bucketNameInput');
+        const unitPriceInput = document.getElementById('unitPriceInput');
+        const quantityInput = document.getElementById('quantityInput');
+        const contractTermsInput = document.getElementById('contractTermsInput');
+        const confirmAddBtn = document.getElementById('confirmAddBtn');
+        const cancelAddBtn = document.getElementById('cancelAddBtn');
+        const sortBtn = document.getElementById('sortBtn');
+        const sortText = document.getElementById('sortText');
+        const todayDeadlines = document.getElementById('todayDeadlines');
+        const todayDeadlinesList = document.getElementById('todayDeadlinesList');
+        const todoView = document.getElementById('todoView');
+        const bucketsView = document.getElementById('bucketsView');
+        const todoList = document.getElementById('todoList');
+        const todoEmpty = document.getElementById('todoEmpty');
+        const bucketsContainer = document.getElementById('bucketsContainer');
+        const emptyState = document.getElementById('emptyState');
+
+        // 앱 초기화
+        async function initApp() {
+            try {
+                await loadData();
+                loading.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+                updateTodayDeadlines();
+            } catch (error) {
+                console.error('앱 초기화 오류:', error);
+                loading.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+            }
+        }
+
+        // 이벤트 리스너
+        bucketsViewBtn.addEventListener('click', () => switchView('buckets'));
+        todoViewBtn.addEventListener('click', () => switchView('todo'));
+        addBucketBtn.addEventListener('click', showAddForm);
+        confirmAddBtn.addEventListener('click', addBucket);
+        cancelAddBtn.addEventListener('click', hideAddForm);
+        sortBtn.addEventListener('click', toggleSort);
+
+        bucketNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                addBucket();
+            }
+        });
+
+        // 뷰 전환
+        function switchView(view) {
+            currentView = view;
+            
+            if (view === 'buckets') {
+                bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
+                todoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+                addBucketSection.classList.remove('hidden');
+                todoView.classList.add('hidden');
+                bucketsView.classList.remove('hidden');
+            } else {
+                todoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
+                bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+                addBucketSection.classList.add('hidden');
+                todoView.classList.remove('hidden');
+                bucketsView.classList.add('hidden');
+                renderTodoView();
+            }
+        }
+
+        // 정렬 토글
+        function toggleSort() {
+            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            sortText.textContent = `마감일 ${sortOrder === 'asc' ? '오름차순' : '내림차순'}`;
+            if (currentView === 'buckets') {
+                renderBuckets();
+            } else {
+                renderTodoView();
+            }
+        }
+
+        // 오늘 마감 업데이트
+        function updateTodayDeadlines() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayItems = [];
+            
+            buckets.forEach(bucket => {
+                (bucket.actions || []).forEach(action => {
+                    if (action.deadline === today && !action.completed) {
+                        todayItems.push({
+                            bucketName: bucket.name,
+                            actionText: action.text
+                        });
+                    }
+                });
+            });
+
+            if (todayItems.length > 0) {
+                todayDeadlinesList.innerHTML = todayItems.map(item => 
+                    `<p class="text-red-600 text-sm">• [${item.bucketName}] ${item.actionText}</p>`
+                ).join('');
+                todayDeadlines.classList.remove('hidden');
+            } else {
+                todayDeadlines.classList.add('hidden');
+            }
+        }
+
+        // 추가 폼 보이기
+        function showAddForm() {
+            addBucketForm.classList.remove('hidden');
+            bucketNameInput.focus();
+        }
+
+        // 추가 폼 숨기기
+        function hideAddForm() {
+            addBucketForm.classList.add('hidden');
+            bucketNameInput.value = '';
+            unitPriceInput.value = '';
+            quantityInput.value = '';
+            contractTermsInput.value = '';
+        }
+
+        // 새 버킷 추가
+        async function addBucket() {
+            const name = bucketNameInput.value.trim();
+            if (!name) {
+                alert('광고주명은 필수입니다.');
+                return;
+            }
+
+            try {
+                confirmAddBtn.disabled = true;
+                confirmAddBtn.textContent = '추가 중...';
+
+                console.log('버킷 추가 시작:', { name, userId });
+
+                // Supabase에 버킷 추가
+                const bucketData = {
+                    name: name,
+                    stage: '대기',
+                    user_id: userId,
+                    unit_price: unitPriceInput.value.trim(),
+                    quantity: quantityInput.value.trim(),
+                    contract_terms: contractTermsInput.value.trim()
+                };
+
+                console.log('삽입할 버킷 데이터:', bucketData);
+
+                const { data: newBucket, error: bucketError } = await supabase
+                    .from('buckets')
+                    .insert([bucketData])
+                    .select()
+                    .single();
+
+                console.log('버킷 삽입 결과:', { newBucket, bucketError });
+
+                if (bucketError) {
+                    console.error('버킷 삽입 오류:', bucketError);
+                    throw bucketError;
+                }
+
+                // 기본 액션 아이템들 추가
+                const actionsToInsert = defaultActionItems['대기'].map((action, index) => ({
+                    bucket_id: newBucket.id,
+                    text: action,
+                    completed: false,
+                    deadline: null,
+                    order_index: index
+                }));
+
+                console.log('삽입할 액션 데이터:', actionsToInsert);
+
+                const { error: actionsError } = await supabase
+                    .from('actions')
+                    .insert(actionsToInsert);
+
+                if (actionsError) {
+                    console.error('액션 삽입 오류:', actionsError);
+                    throw actionsError;
+                }
+
+                console.log('버킷과 액션 추가 완료');
+
+                hideAddForm();
+                await loadData();
+                updateTodayDeadlines();
+                
+            } catch (error) {
+                console.error('버킷 추가 전체 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
+            } finally {
+                confirmAddBtn.disabled = false;
+                confirmAddBtn.textContent = '추가';
+            }
+        }
+
+        // 버킷 정보 업데이트
+        async function updateBucketInfo(bucketId, field, value) {
+            try {
+                const { error } = await supabase
+                    .from('buckets')
+                    .update({ [field]: value })
+                    .eq('id', bucketId)
+                    .eq('user_id', userId);
+
+                if (error) throw error;
+
+                // 로컬 상태 업데이트
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (bucket) {
+                    bucket[field] = value;
+                }
+            } catch (error) {
+                console.error('버킷 정보 업데이트 오류:', error);
+            }
+        }
+
+        // 단계 변경
+        async function changeStage(bucketId, newStage) {
+            try {
+                const { error } = await supabase
+                    .from('buckets')
+                    .update({ stage: newStage })
+                    .eq('id', bucketId)
+                    .eq('user_id', userId);
+
+                if (error) throw error;
+
+                // 로컬 상태 업데이트
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (bucket) {
+                    bucket.stage = newStage;
+                    renderBuckets();
+                }
+                
+            } catch (error) {
+                alert('단계 변경 중 오류가 발생했습니다: ' + error.message);
+                await loadData();
+            }
+        }
+
+        // 새 액션 아이템 추가
+        async function addCustomAction(bucketId) {
+            const text = prompt('새 액션아이템을 입력하세요:');
+            if (!text || !text.trim()) return;
+
+            try {
+                const { error } = await supabase
+                    .from('actions')
+                    .insert([{
+                        bucket_id: bucketId,
+                        text: text.trim(),
+                        completed: false,
+                        deadline: null
+                    }]);
+
+                if (error) throw error;
+                await loadData();
+                updateTodayDeadlines();
+            } catch (error) {
+                alert('액션아이템 추가 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 액션 아이템 토글
+        async function toggleActionItem(bucketId, actionId) {
+            try {
+                const bucket = buckets.find(b => b.id === bucketId);
+                const action = bucket?.actions?.find(a => a.id === actionId);
+                
+                if (!action) return;
+
+                const newCompleted = !action.completed;
+
+                const { error } = await supabase
+                    .from('actions')
+                    .update({ completed: newCompleted })
+                    .eq('id', actionId);
+
+                if (error) throw error;
+
+                // 로컬 상태 업데이트
+                action.completed = newCompleted;
+                if (currentView === 'buckets') {
+                    renderBuckets();
+                } else {
+                    renderTodoView();
+                }
+                updateTodayDeadlines();
+                
+            } catch (error) {
+                alert('액션아이템 업데이트 중 오류가 발생했습니다: ' + error.message);
+                await loadData();
+            }
+        }
+
+        // 액션 아이템 수정
+        async function editActionItem(actionId, newText) {
+            try {
+                const { error } = await supabase
+                    .from('actions')
+                    .update({ text: newText })
+                    .eq('id', actionId);
+
+                if (error) throw error;
+
+                // 로컬 상태 업데이트
+                buckets.forEach(bucket => {
+                    const action = bucket.actions?.find(a => a.id === actionId);
+                    if (action) {
+                        action.text = newText;
+                    }
+                });
+
+                if (currentView === 'buckets') {
+                    renderBuckets();
+                } else {
+                    renderTodoView();
+                }
+            } catch (error) {
+                alert('액션아이템 수정 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 마감일 설정
+        async function setDeadline(bucketId, actionId, deadline) {
+            try {
+                const { error } = await supabase
+                    .from('actions')
+                    .update({ deadline: deadline || null })
+                    .eq('id', actionId);
+
+                if (error) throw error;
+
+                // 로컬 상태 업데이트
+                const bucket = buckets.find(b => b.id === bucketId);
+                const action = bucket?.actions?.find(a => a.id === actionId);
+                if (action) {
+                    action.deadline = deadline;
+                }
+
+                updateTodayDeadlines();
+            } catch (error) {
+                console.error('마감일 설정 오류:', error);
+            }
+        }
+
+        // 액션 아이템 삭제
+        async function deleteActionItem(bucketId, actionId) {
+            if (!confirm('이 액션아이템을 삭제하시겠습니까?')) return;
+
+            try {
+                const { error } = await supabase
+                    .from('actions')
+                    .delete()
+                    .eq('id', actionId);
+
+                if (error) throw error;
+                await loadData();
+                updateTodayDeadlines();
+            } catch (error) {
+                alert('액션아이템 삭제 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 버킷 삭제
+        async function deleteBucket(bucketId) {
+            if (!confirm('정말로 이 프로젝트를 삭제하시겠습니까?\n모든 액션아이템도 함께 삭제됩니다.')) return;
+
+            try {
+                const { error } = await supabase
+                    .from('buckets')
+                    .delete()
+                    .eq('id', bucketId)
+                    .eq('user_id', userId);
+
+                if (error) throw error;
+
+                await loadData();
+                updateTodayDeadlines();
+                
+            } catch (error) {
+                alert('프로젝트 삭제 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 버킷 접기/펼치기
+        function toggleBucketCollapse(bucketId) {
+            collapsedBuckets[bucketId] = !collapsedBuckets[bucketId];
+            renderBuckets();
+        }
+
+        // 계약 정보 접기/펼치기
+        function toggleContractCollapse(bucketId) {
+            collapsedContracts[bucketId] = !collapsedContracts[bucketId];
+            renderBuckets();
+        }
+
+        // 액션 아이템 정렬
+        function getSortedActions(actions) {
+            return [...actions].sort((a, b) => {
+                if (!a.deadline && !b.deadline) return 0;
+                if (!a.deadline) return sortOrder === 'asc' ? 1 : -1;
+                if (!b.deadline) return sortOrder === 'asc' ? -1 : 1;
+                
+                const dateA = new Date(a.deadline);
+                const dateB = new Date(b.deadline);
+                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            });
+        }
+
+        // 투두뷰 렌더링
+        function renderTodoView() {
+            const allItems = [];
+            buckets.forEach(bucket => {
+                (bucket.actions || []).forEach(action => {
+                    allItems.push({
+                        ...action,
+                        bucketName: bucket.name,
+                        bucketId: bucket.id,
+                        bucketStage: bucket.stage
+                    });
+                });
+            });
+
+            const sortedItems = getSortedActions(allItems);
+
+            if (sortedItems.length === 0) {
+                todoList.classList.add('hidden');
+                todoEmpty.classList.remove('hidden');
+                return;
+            }
+
+            todoList.classList.remove('hidden');
+            todoEmpty.classList.add('hidden');
+
+            todoList.innerHTML = sortedItems.map(action => {
+                const today = new Date().toISOString().split('T')[0];
+                const isToday = action.deadline === today && !action.completed;
+                
+                return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center gap-3 flex-1">
+                            <button
+                                onclick="toggleActionItem(${action.bucketId}, ${action.id})"
+                                class="flex-shrink-0 ${action.completed ? 'text-green-600' : 'text-gray-400'}"
+                            >
+                                ${action.completed ? '✅' : '⭕'}
+                            </button>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium ${action.completed ? 'line-through text-gray-500' : 'text-gray-800'}">
+                                    ${action.text}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    [${action.bucketName}] - ${action.bucketStage}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input
+                                type="date"
+                                value="${action.deadline || ''}"
+                                onchange="setDeadline(${action.bucketId}, ${action.id}, this.value)"
+                                class="px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${isToday ? 'border-red-500 bg-red-50' : 'border-gray-200'}"
+                            />
+                            <button
+                                onclick="deleteActionItem(${action.bucketId}, ${action.id})"
+                                class="text-red-500 hover:text-red-700"
+                            >
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 버킷 목록 렌더링
+        function renderBuckets() {
+            if (buckets.length === 0) {
+                emptyState.classList.remove('hidden');
+                bucketsContainer.innerHTML = '';
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            bucketsContainer.innerHTML = '';
+
+            buckets.forEach(bucket => {
+                const bucketElement = createBucketElement(bucket);
+                bucketsContainer.appendChild(bucketElement);
+            });
+        }
+
+            return div;
+        }
+
+        // 인라인 액션 아이템 편집
+        function editActionInline(actionId, element) {
+            const currentText = element.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentText;
+            input.className = 'flex-1 px-2 py-1 text-sm border border-blue-500 rounded focus:outline-none focus:ring-1 focus:ring-blue-500';
+            
+            input.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter') {
+                    const newText = input.value.trim();
+                    if (newText && newText !== currentText) {
+                        await editActionItem(actionId, newText);
+                    } else {
+                        element.textContent = currentText;
+                    }
+                } else if (e.key === 'Escape') {
+                    element.textContent = currentText;
+                }
+            });
+            
+            input.addEventListener('blur', async () => {
+                const newText = input.value.trim();
+                if (newText && newText !== currentText) {
+                    await editActionItem(actionId, newText);
+                } else {
+                    element.textContent = currentText;
+                }
+            });
+            
+            element.replaceWith(input);
+            input.focus();
+            input.select();
+        }
+
+        // 앱 시작시 데이터 로드
+        async function loadData() {
+            try {
+                console.log('데이터 로드 시작, userId:', userId);
+                
+                const { data, error } = await supabase
+                    .from('buckets')
+                    .select(`
+                        *,
+                        actions (*)
+                    `)
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+
+                console.log('Supabase 응답:', { data, error });
+
+                if (error) {
+                    console.error('Supabase 오류:', error);
+                    throw error;
+                }
+
+                buckets = data || [];
+                console.log('로드된 버킷 수:', buckets.length);
+                
+                renderBuckets();
+            } catch (error) {
+                console.error('데이터 로드 오류:', error);
+                alert('데이터를 불러오는데 실패했습니다: ' + error.message);
+                renderBuckets();
+            }
+        }
+
+        // 페이지 로드시 데이터 불러오기
+        initApp();
+
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <button
+                                onclick="toggleBucketCollapse(${bucket.id})"
+                                class="text-gray-600 hover:text-gray-800"
+                            >
+                                ${isCollapsed ? '▶' : '▼'}
+                            </button>
+                            <h3 class="text-lg font-semibold text-gray-800 flex-1">${bucket.name}</h3>
+                        </div>
+                        <p class="text-sm text-gray-500">생성일: ${createdDate}</p>
+                    </div>
+                    <button
+                        onclick="deleteBucket(${bucket.id})"
+                        class="text-red-500 hover:text-red-700"
+                    >
+                        🗑️
+                    </button>
+                </div>
+
+                ${!isCollapsed ? `
+                    <!-- 단계 선택 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">단계</label>
+                        <select
+                            onchange="changeStage(${bucket.id}, this.value)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="대기" ${bucket.stage === '대기' ? 'selected' : ''}>대기</option>
+                            <option value="진행_광고제작" ${bucket.stage === '진행_광고제작' ? 'selected' : ''}>진행_광고제작</option>
+                            <option value="진행_광고운영" ${bucket.stage === '진행_광고운영' ? 'selected' : ''}>진행_광고운영</option>
+                            <option value="진행_매출정산" ${bucket.stage === '진행_매출정산' ? 'selected' : ''}>진행_매출정산</option>
+                        </select>
+                    </div>
+
+                    <!-- 계약 정보 -->
+                    <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-medium text-gray-700">계약 정보</h4>
+                            <button
+                                onclick="toggleContractCollapse(${bucket.id})"
+                                class="text-gray-600 hover:text-gray-800"
+                            >
+                                ${isContractCollapsed ? '▶' : '▼'}
+                            </button>
+                        </div>
+                        
+                        ${!isContractCollapsed ? `
+                            <div class="grid grid-cols-1 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">단가 (원)</label>
+                                    <input
+                                        type="text"
+                                        value="${bucket.unit_price || ''}"
+                                        onchange="updateBucketInfo(${bucket.id}, 'unit_price', this.value)"
+                                        placeholder="예: 1,000,000"
+                                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">수량</label>
+                                    <input
+                                        type="text"
+                                        value="${bucket.quantity || ''}"
+                                        onchange="updateBucketInfo(${bucket.id}, 'quantity', this.value)"
+                                        placeholder="예: 100회 노출"
+                                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">계약조건 및 기타사항</label>
+                                    <textarea
+                                        onchange="updateBucketInfo(${bucket.id}, 'contract_terms', this.value)"
+                                        placeholder="계약 조건 및 기타사항을 입력하세요..."
+                                        rows="3"
+                                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                                    >${bucket.contract_terms || ''}</textarea>
+                                </div>
+                            </div>
+                        ` : `
+                            ${(bucket.unit_price || bucket.quantity) ? `
+                                <div class="text-xs text-gray-500">
+                                    ${bucket.unit_price ? `단가: ${bucket.unit_price}원` : ''}
+                                    ${bucket.unit_price && bucket.quantity ? ' | ' : ''}
+                                    ${bucket.quantity ? `수량: ${bucket.quantity}` : ''}
+                                </div>
+                            ` : ''}
+                        `}
+                    </div>
+
+                    <!-- 액션 아이템 -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-medium text-gray-700">액션 아이템</h4>
+                            <button
+                                onclick="addCustomAction(${bucket.id})"
+                                class="text-blue-600 hover:text-blue-800"
+                            >
+                                ➕
+                            </button>
+                        </div>
+                        
+                        ${sortedActions.map(action => {
+                            const today = new Date().toISOString().split('T')[0];
+                            const isToday = action.deadline === today && !action.completed;
+                            
+                            return `
+                                <div class="flex flex-col gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <button
+                                            onclick="toggleActionItem(${bucket.id}, ${action.id})"
+                                            class="flex-shrink-0 ${action.completed ? 'text-green-600' : 'text-gray-400'}"
+                                        >
+                                            ${action.completed ? '✅' : '⭕'}
+                                        </button>
+                                        <span class="flex-1 text-sm ${action.completed ? 'line-through text-gray-500' : 'text-gray-700'}" 
+                                              ondblclick="editActionInline(${action.id}, this)">
+                                            ${action.text}
+                                        </span>
+                                        <button
+                                            onclick="deleteActionItem(${bucket.id}, ${action.id})"
+                                            class="text-red-500 hover:text-red-700"
+                                        >
+                                            ❌
+                                        </button>
+                                    </div>
+                                    <input
+                                        type="date"
+                                        value="${action.deadline || ''}"
+                                        onchange="setDeadline(${bucket.id}, ${action.id}, this.value)"
+                                        class="ml-7 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${isToday ? 'border-red-500 bg-red-50' : 'border-gray-200'}"
+                                        placeholder="마감일"
+                                    />
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- 진행률 표시 -->
+                    <div class="mt-4">
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>진행률</span>
+                            <span>${progressPercentage}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                                class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                style="width: ${progressPercentage}%"
+                            ></div>
+                        </div>
+                    </div>
+                ` : `
+                    <!-- 접혀있을 때 요약 정보 -->
+                    <div class="mt-2">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>단계: ${bucket.stage}</span>
+                            <span>완료: ${completedCount}/${actions.length}</span>
+                        </div>
+                        ${(bucket.unit_price || bucket.quantity) ? `
+                            <div class="text-xs text-gray-500 mb-2">
+                                ${bucket.unit_price ? `단가: ${bucket.unit_price}원` : ''}
+                                ${bucket.unit_price && bucket.quantity ? ' | ' : ''}
+                                ${bucket.quantity ? `수량: ${bucket.quantity}` : ''}
+                            </div>
+                        ` : ''}
+                        <div class="w-full bg-gray-200 rounded-full h-1 mt-2">
+                            <div
+                                class="bg-blue-600 h-1 rounded-full transition-all duration-300"
+                                style="width: ${progressPercentage}%"
+                            ></div>
+                        </div>
+                    </div>
+                `}
+            `;
