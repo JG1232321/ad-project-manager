@@ -194,17 +194,58 @@
                 console.log('SUPABASE_URL:', SUPABASE_URL);
                 console.log('User ID:', userId);
                 
-                // 단순한 연결 테스트
-                console.log('Supabase 연결 테스트 중...');
-                const testResult = await supabase.from('buckets').select('*').limit(1);
-                console.log('연결 테스트 결과:', testResult);
+                // 1단계: Supabase 기본 연결 테스트
+                console.log('1단계: Supabase 연결 테스트 중...');
+                const connectionTest = await supabase.from('buckets').select('count', { count: 'exact' }).limit(0);
+                console.log('연결 테스트 결과:', connectionTest);
                 
-                if (testResult.error) {
-                    throw new Error(`Supabase 연결 실패: ${testResult.error.message}`);
+                if (connectionTest.error) {
+                    console.error('연결 테스트 실패:', connectionTest.error);
+                    throw new Error(`Supabase 연결 실패: ${connectionTest.error.message}`);
                 }
                 
-                console.log('데이터 로드 시작...');
-                await loadData();
+                // 2단계: 테이블 존재 확인
+                console.log('2단계: 테이블 구조 확인 중...');
+                const tableTest = await supabase.from('buckets').select('id').limit(1);
+                console.log('테이블 확인 결과:', tableTest);
+                
+                if (tableTest.error) {
+                    console.error('테이블 확인 실패:', tableTest.error);
+                    throw new Error(`테이블 접근 실패: ${tableTest.error.message}`);
+                }
+                
+                // 3단계: 사용자 데이터 조회
+                console.log('3단계: 사용자 데이터 조회 중...');
+                const userData = await supabase
+                    .from('buckets')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .limit(5);
+                console.log('사용자 데이터 조회 결과:', userData);
+                
+                // 4단계: 관계형 데이터 조회 테스트
+                console.log('4단계: 관계형 데이터 조회 테스트...');
+                const relationTest = await supabase
+                    .from('buckets')
+                    .select(`
+                        id,
+                        name,
+                        actions(id, text)
+                    `)
+                    .eq('user_id', userId)
+                    .limit(1);
+                console.log('관계형 데이터 조회 결과:', relationTest);
+                
+                if (relationTest.error) {
+                    console.error('관계형 쿼리 실패:', relationTest.error);
+                    // 관계형 쿼리가 실패하면 단순 쿼리로 대체
+                    console.log('단순 쿼리로 대체 시도...');
+                    await loadDataSimple();
+                } else {
+                    // 5단계: 전체 데이터 로드
+                    console.log('5단계: 전체 데이터 로드...');
+                    await loadData();
+                }
                 
                 loading.classList.add('hidden');
                 mainApp.classList.remove('hidden');
@@ -232,6 +273,7 @@
                         <p>1. F12 → Console 탭에서 자세한 오류 확인</p>
                         <p>2. Supabase에서 테이블이 생성되었는지 확인</p>
                         <p>3. API 키가 정확한지 확인</p>
+                        <button onclick="location.reload()" class="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-xs">새로고침</button>
                     </div>
                 `;
                 mainApp.insertBefore(errorDiv, mainApp.firstChild);
@@ -922,6 +964,50 @@
             return div;
         }
 
+        // 단순한 데이터 로드 (관계형 쿼리 실패시 대체용)
+        async function loadDataSimple() {
+            try {
+                console.log('단순 데이터 로드 시작...');
+                
+                // 1. 버킷만 먼저 로드
+                const { data: bucketsData, error: bucketsError } = await supabase
+                    .from('buckets')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+
+                if (bucketsError) throw bucketsError;
+                console.log('버킷 데이터:', bucketsData);
+
+                // 2. 각 버킷의 액션들을 개별적으로 로드
+                const bucketsWithActions = [];
+                for (const bucket of bucketsData || []) {
+                    const { data: actionsData, error: actionsError } = await supabase
+                        .from('actions')
+                        .select('*')
+                        .eq('bucket_id', bucket.id)
+                        .order('order_index', { ascending: true });
+
+                    if (actionsError) {
+                        console.error('액션 로드 오류:', actionsError);
+                        bucket.actions = [];
+                    } else {
+                        bucket.actions = actionsData || [];
+                    }
+                    bucketsWithActions.push(bucket);
+                }
+
+                buckets = bucketsWithActions;
+                console.log('최종 버킷 데이터:', buckets);
+                renderBuckets();
+                
+            } catch (error) {
+                console.error('단순 데이터 로드 오류:', error);
+                buckets = [];
+                renderBuckets();
+            }
+        }
+
         // 앱 시작시 데이터 로드
         async function loadData() {
             try {
@@ -940,6 +1026,12 @@
 
                 if (error) {
                     console.error('데이터 로드 오류:', error);
+                    // 관계형 쿼리 실패시 단순 쿼리로 대체
+                    if (error.code === 'PGRST116' || error.message.includes('relation')) {
+                        console.log('관계형 쿼리 실패, 단순 쿼리로 대체...');
+                        await loadDataSimple();
+                        return;
+                    }
                     throw error;
                 }
 
