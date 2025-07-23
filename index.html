@@ -74,6 +74,18 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">수량</label>
                             <input type="text" id="quantityInput" placeholder="예: 100회 노출" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">상품</label>
+                            <select id="productInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">상품 선택</option>
+                                <option value="CPM">CPM</option>
+                                <option value="CPA">CPA</option>
+                                <option value="CPA+">CPA+</option>
+                                <option value="CPR">CPR</option>
+                                <option value="CPR+">CPR+</option>
+                                <option value="CPS">CPS</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">계약조건 및 기타사항</label>
@@ -88,14 +100,26 @@
 
             <!-- 투두리스트 뷰 -->
             <div id="todoView" class="bg-white rounded-lg shadow-md p-6 hidden">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">전체 액션아이템</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">전체 액션아이템</h2>
+                    <div class="flex gap-2">
+                        <button id="toggleCompletedBtn" class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
+                            <span>👁️</span>
+                            <span id="toggleCompletedText">완료항목 숨기기</span>
+                        </button>
+                        <button id="todoSortBtn" class="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                            <span>📅</span>
+                            <span id="todoSortText">마감일 오름차순</span>
+                        </button>
+                    </div>
+                </div>
                 <div id="todoList" class="space-y-3"></div>
                 <div id="todoEmpty" class="text-gray-500 text-center py-8 hidden">등록된 액션아이템이 없습니다.</div>
             </div>
 
             <!-- 버킷 뷰 -->
             <div id="bucketsView">
-                <div id="bucketsContainer" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3"></div>
+                <div id="bucketsContainer" class="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"></div>
                 <div id="emptyState" class="text-center py-16">
                     <div class="text-6xl mb-4">📋</div>
                     <p class="text-gray-500 text-xl mb-2">아직 등록된 광고주가 없습니다.</p>
@@ -107,8 +131,8 @@
 
     <script>
         // ⚠️ 여기에 실제 Supabase 값을 넣으세요!
-        const SUPABASE_URL = 'https://spuiuwgiioxohrjnywnn.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwdWl1d2dpaW94b2hyam55d25uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNTU2ODQsImV4cCI6MjA2ODgzMTY4NH0.MMJ9y_KzmluQ5AhcU58vkWD_LdwhEalKQ1fbFnZm0LI';
+        const SUPABASE_URL = 'https://nkrizaxxgerkpimggxug.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rcml6YXh4Z2Vya3BpbWdneHVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNTA1MjUsImV4cCI6MjA2ODgyNjUyNX0.hcbiCfwFDfj2sRDHoj3oBBcmXLyy_CavryDKstpXGGs';
         
         // Supabase 클라이언트 초기화
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -119,8 +143,11 @@
         localStorage.setItem('userId', userId);
         let currentView = 'buckets';
         let sortOrder = 'asc';
-        let collapsedBuckets = {};
-        let collapsedContracts = {};
+        let collapsedBuckets = {}; // 버킷은 기본적으로 접힘 (true가 접힘)
+        let collapsedContracts = {}; // 계약정보도 기본적으로 접힘 (true가 접힘)
+        let editingBucket = null; // 편집 중인 버킷 ID
+        let editingAction = null; // 편집 중인 액션 ID
+        let showCompletedTodos = true; // 완료된 투두 표시 여부
 
         // 단계별 기본 액션 아이템
         const defaultActionItems = {
@@ -141,6 +168,7 @@
         const bucketNameInput = document.getElementById('bucketNameInput');
         const unitPriceInput = document.getElementById('unitPriceInput');
         const quantityInput = document.getElementById('quantityInput');
+        const productInput = document.getElementById('productInput');
         const contractTermsInput = document.getElementById('contractTermsInput');
         const confirmAddBtn = document.getElementById('confirmAddBtn');
         const cancelAddBtn = document.getElementById('cancelAddBtn');
@@ -152,6 +180,10 @@
         const bucketsView = document.getElementById('bucketsView');
         const todoList = document.getElementById('todoList');
         const todoEmpty = document.getElementById('todoEmpty');
+        const todoSortBtn = document.getElementById('todoSortBtn');
+        const todoSortText = document.getElementById('todoSortText');
+        const toggleCompletedBtn = document.getElementById('toggleCompletedBtn');
+        const toggleCompletedText = document.getElementById('toggleCompletedText');
         const bucketsContainer = document.getElementById('bucketsContainer');
         const emptyState = document.getElementById('emptyState');
 
@@ -213,6 +245,8 @@
         confirmAddBtn.addEventListener('click', addBucket);
         cancelAddBtn.addEventListener('click', hideAddForm);
         sortBtn.addEventListener('click', toggleSort);
+        todoSortBtn.addEventListener('click', toggleTodoSort);
+        toggleCompletedBtn.addEventListener('click', toggleCompletedVisibility);
 
         bucketNameInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -241,13 +275,37 @@
             }
         }
 
-        // 정렬 토글
+        // 정렬 토글 (버킷뷰용)
         function toggleSort() {
             sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
             sortText.textContent = `마감일 ${sortOrder === 'asc' ? '오름차순' : '내림차순'}`;
             if (currentView === 'buckets') {
                 renderBuckets();
+            }
+        }
+
+        // 투두리스트 정렬 토글
+        function toggleTodoSort() {
+            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            todoSortText.textContent = `마감일 ${sortOrder === 'asc' ? '오름차순' : '내림차순'}`;
+            if (currentView === 'todo') {
+                renderTodoView();
+            }
+        }
+
+        // 완료된 투두 가시성 토글
+        function toggleCompletedVisibility() {
+            showCompletedTodos = !showCompletedTodos;
+            
+            if (showCompletedTodos) {
+                toggleCompletedBtn.className = 'flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors';
+                toggleCompletedText.textContent = '완료항목 숨기기';
             } else {
+                toggleCompletedBtn.className = 'flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors';
+                toggleCompletedText.textContent = '완료항목 보기';
+            }
+            
+            if (currentView === 'todo') {
                 renderTodoView();
             }
         }
@@ -290,6 +348,7 @@
             bucketNameInput.value = '';
             unitPriceInput.value = '';
             quantityInput.value = '';
+            productInput.value = '';
             contractTermsInput.value = '';
         }
 
@@ -311,6 +370,7 @@
                     user_id: userId,
                     unit_price: unitPriceInput.value.trim(),
                     quantity: quantityInput.value.trim(),
+                    product: productInput.value.trim(),
                     contract_terms: contractTermsInput.value.trim()
                 };
 
@@ -506,6 +566,81 @@
             }
         }
 
+        // 버킷명 편집 시작
+        function startEditBucket(bucketId, currentName) {
+            editingBucket = bucketId;
+            renderBuckets();
+        }
+
+        // 버킷명 편집 저장
+        async function saveEditBucket(bucketId, newName) {
+            if (!newName.trim()) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('buckets')
+                    .update({ name: newName.trim() })
+                    .eq('id', bucketId)
+                    .eq('user_id', userId);
+
+                if (error) throw error;
+
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (bucket) {
+                    bucket.name = newName.trim();
+                }
+                
+                editingBucket = null;
+                renderBuckets();
+            } catch (error) {
+                alert('버킷명 수정 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 버킷명 편집 취소
+        function cancelEditBucket() {
+            editingBucket = null;
+            renderBuckets();
+        }
+
+        // 액션 아이템 편집 시작
+        function startEditAction(actionId) {
+            editingAction = actionId;
+            renderBuckets();
+        }
+
+        // 액션 아이템 편집 저장
+        async function saveEditAction(actionId, newText) {
+            if (!newText.trim()) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('actions')
+                    .update({ text: newText.trim() })
+                    .eq('id', actionId);
+
+                if (error) throw error;
+
+                buckets.forEach(bucket => {
+                    const action = bucket.actions?.find(a => a.id === actionId);
+                    if (action) {
+                        action.text = newText.trim();
+                    }
+                });
+                
+                editingAction = null;
+                renderBuckets();
+            } catch (error) {
+                alert('액션아이템 수정 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 액션 아이템 편집 취소
+        function cancelEditAction() {
+            editingAction = null;
+            renderBuckets();
+        }
+
         // 버킷 접기/펼치기
         function toggleBucketCollapse(bucketId) {
             collapsedBuckets[bucketId] = !collapsedBuckets[bucketId];
@@ -545,7 +680,21 @@
                 });
             });
 
-            const sortedItems = getSortedActions(allItems);
+            // 완료된 항목 필터링
+            let filteredItems = allItems;
+            if (!showCompletedTodos) {
+                filteredItems = allItems.filter(item => !item.completed);
+            }
+
+            // 완료 상태별로 분리하고 정렬
+            const incompleteItems = filteredItems.filter(item => !item.completed);
+            const completedItems = filteredItems.filter(item => item.completed);
+            
+            const sortedIncompleteItems = getSortedActions(incompleteItems);
+            const sortedCompletedItems = getSortedActions(completedItems);
+            
+            // 미완료 항목을 위에, 완료 항목을 아래에 배치
+            const sortedItems = [...sortedIncompleteItems, ...sortedCompletedItems];
 
             if (sortedItems.length === 0) {
                 todoList.classList.add('hidden');
@@ -561,22 +710,22 @@
                 const isToday = action.deadline === today && !action.completed;
                 
                 return `
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between p-3 rounded-lg border ${action.completed ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200'}">
                         <div class="flex items-center gap-3 flex-1">
-                            <button onclick="toggleActionItem(${action.bucketId}, ${action.id})" class="flex-shrink-0 ${action.completed ? 'text-green-600' : 'text-gray-400'}">
+                            <button onclick="toggleActionItem(${action.bucketId}, ${action.id})" class="flex-shrink-0 text-lg">
                                 ${action.completed ? '✅' : '⭕'}
                             </button>
                             <div class="flex-1">
                                 <p class="text-sm font-medium ${action.completed ? 'line-through text-gray-500' : 'text-gray-800'}">
                                     ${action.text}
                                 </p>
-                                <p class="text-xs text-gray-500">
+                                <p class="text-xs ${action.completed ? 'text-gray-400' : 'text-gray-500'}">
                                     [${action.bucketName}] - ${action.bucketStage}
                                 </p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <input type="date" value="${action.deadline || ''}" onchange="setDeadline(${action.bucketId}, ${action.id}, this.value)" class="px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${isToday ? 'border-red-500 bg-red-50' : 'border-gray-200'}"/>
+                            <input type="date" value="${action.deadline || ''}" onchange="setDeadline(${action.bucketId}, ${action.id}, this.value)" class="px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${isToday ? 'border-red-500 bg-red-50' : 'border-gray-200'} ${action.completed ? 'text-gray-400' : ''}"/>
                             <button onclick="deleteActionItem(${action.bucketId}, ${action.id})" class="text-red-500 hover:text-red-700">
                                 🗑️
                             </button>
@@ -606,37 +755,43 @@
         // 버킷 요소 생성
         function createBucketElement(bucket) {
             const div = document.createElement('div');
-            div.className = 'bg-white rounded-lg shadow-md p-6';
+            div.className = 'bg-white rounded-lg shadow-md p-4';
 
             const actions = bucket.actions || [];
             const sortedActions = getSortedActions(actions);
-            const completedCount = actions.filter(action => action.completed).length;
-            const progressPercentage = actions.length > 0 ? Math.round((completedCount / actions.length) * 100) : 0;
-            const createdDate = new Date(bucket.created_at).toLocaleDateString('ko-KR');
-            const isCollapsed = collapsedBuckets[bucket.id];
-            const isContractCollapsed = collapsedContracts[bucket.id];
+            const isCollapsed = collapsedBuckets[bucket.id] !== false; // 기본값은 접힘 (true)
+            const isContractCollapsed = collapsedContracts[bucket.id] !== false; // 기본값은 접힘 (true)
 
             div.innerHTML = `
-                <div class="flex justify-between items-start mb-4">
+                <div class="flex justify-between items-start mb-3">
                     <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
+                        <div class="flex items-center gap-2 mb-1">
                             <button onclick="toggleBucketCollapse(${bucket.id})" class="text-gray-600 hover:text-gray-800">
                                 ${isCollapsed ? '▶' : '▼'}
                             </button>
-                            <h3 class="text-lg font-semibold text-gray-800 flex-1">${bucket.name}</h3>
+                            ${editingBucket === bucket.id ? `
+                                <input type="text" value="${bucket.name}" 
+                                       onkeypress="if(event.key==='Enter') saveEditBucket(${bucket.id}, this.value); if(event.key==='Escape') cancelEditBucket();"
+                                       onblur="saveEditBucket(${bucket.id}, this.value)"
+                                       class="flex-1 px-2 py-1 text-sm font-semibold border border-blue-500 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                       autofocus />
+                                <button onclick="cancelEditBucket()" class="text-red-500 hover:text-red-700 text-sm">✕</button>
+                            ` : `
+                                <h3 class="text-sm font-semibold text-gray-800 flex-1">${bucket.name}</h3>
+                                <button onclick="startEditBucket(${bucket.id}, '${bucket.name}')" class="text-gray-400 hover:text-gray-600 text-sm">✏️</button>
+                            `}
                         </div>
-                        <p class="text-sm text-gray-500">생성일: ${createdDate}</p>
                     </div>
-                    <button onclick="deleteBucket(${bucket.id})" class="text-red-500 hover:text-red-700">
+                    <button onclick="deleteBucket(${bucket.id})" class="text-red-500 hover:text-red-700 text-sm">
                         🗑️
                     </button>
                 </div>
 
                 ${!isCollapsed ? `
                     <!-- 단계 선택 -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">단계</label>
-                        <select onchange="changeStage(${bucket.id}, this.value)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">단계</label>
+                        <select onchange="changeStage(${bucket.id}, this.value)" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                             <option value="대기" ${bucket.stage === '대기' ? 'selected' : ''}>대기</option>
                             <option value="진행_광고제작" ${bucket.stage === '진행_광고제작' ? 'selected' : ''}>진행_광고제작</option>
                             <option value="진행_광고운영" ${bucket.stage === '진행_광고운영' ? 'selected' : ''}>진행_광고운영</option>
@@ -645,45 +800,59 @@
                     </div>
 
                     <!-- 계약 정보 -->
-                    <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-                        <div class="flex justify-between items-center mb-3">
-                            <h4 class="font-medium text-gray-700">계약 정보</h4>
+                    <div class="mb-3 p-3 bg-gray-50 rounded">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-xs font-medium text-gray-700">계약 정보</h4>
                             <button onclick="toggleContractCollapse(${bucket.id})" class="text-gray-600 hover:text-gray-800">
                                 ${isContractCollapsed ? '▶' : '▼'}
                             </button>
                         </div>
                         
                         ${!isContractCollapsed ? `
-                            <div class="grid grid-cols-1 gap-3">
+                            <div class="grid grid-cols-1 gap-2">
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600 mb-1">단가 (원)</label>
-                                    <input type="text" value="${bucket.unit_price || ''}" onchange="updateBucketInfo(${bucket.id}, 'unit_price', this.value)" placeholder="예: 1,000,000" class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+                                    <input type="text" value="${bucket.unit_price || ''}" onchange="updateBucketInfo(${bucket.id}, 'unit_price', this.value)" placeholder="예: 1,000,000" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"/>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600 mb-1">수량</label>
-                                    <input type="text" value="${bucket.quantity || ''}" onchange="updateBucketInfo(${bucket.id}, 'quantity', this.value)" placeholder="예: 100회 노출" class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+                                    <input type="text" value="${bucket.quantity || ''}" onchange="updateBucketInfo(${bucket.id}, 'quantity', this.value)" placeholder="예: 100회 노출" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"/>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">계약조건 및 기타사항</label>
-                                    <textarea onchange="updateBucketInfo(${bucket.id}, 'contract_terms', this.value)" placeholder="계약 조건 및 기타사항을 입력하세요..." rows="3" class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none">${bucket.contract_terms || ''}</textarea>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">상품</label>
+                                    <select onchange="updateBucketInfo(${bucket.id}, 'product', this.value)" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                        <option value="">선택</option>
+                                        <option value="CPM" ${bucket.product === 'CPM' ? 'selected' : ''}>CPM</option>
+                                        <option value="CPA" ${bucket.product === 'CPA' ? 'selected' : ''}>CPA</option>
+                                        <option value="CPA+" ${bucket.product === 'CPA+' ? 'selected' : ''}>CPA+</option>
+                                        <option value="CPR" ${bucket.product === 'CPR' ? 'selected' : ''}>CPR</option>
+                                        <option value="CPR+" ${bucket.product === 'CPR+' ? 'selected' : ''}>CPR+</option>
+                                        <option value="CPS" ${bucket.product === 'CPS' ? 'selected' : ''}>CPS</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">계약조건</label>
+                                    <textarea onchange="updateBucketInfo(${bucket.id}, 'contract_terms', this.value)" placeholder="계약 조건..." rows="2" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none">${bucket.contract_terms || ''}</textarea>
                                 </div>
                             </div>
                         ` : `
-                            ${(bucket.unit_price || bucket.quantity) ? `
+                            ${(bucket.unit_price || bucket.quantity || bucket.product) ? `
                                 <div class="text-xs text-gray-500">
-                                    ${bucket.unit_price ? `단가: ${bucket.unit_price}원` : ''}
-                                    ${bucket.unit_price && bucket.quantity ? ' | ' : ''}
-                                    ${bucket.quantity ? `수량: ${bucket.quantity}` : ''}
+                                    ${bucket.unit_price ? `${bucket.unit_price}원` : ''}
+                                    ${(bucket.unit_price && bucket.quantity) ? ' | ' : ''}
+                                    ${bucket.quantity ? `${bucket.quantity}` : ''}
+                                    ${((bucket.unit_price || bucket.quantity) && bucket.product) ? ' | ' : ''}
+                                    ${bucket.product ? `${bucket.product}` : ''}
                                 </div>
                             ` : ''}
                         `}
                     </div>
 
                     <!-- 액션 아이템 -->
-                    <div class="space-y-3">
+                    <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <h4 class="font-medium text-gray-700">액션 아이템</h4>
-                            <button onclick="addCustomAction(${bucket.id})" class="text-blue-600 hover:text-blue-800">
+                            <h4 class="text-xs font-medium text-gray-700">액션 아이템</h4>
+                            <button onclick="addCustomAction(${bucket.id})" class="text-blue-600 hover:text-blue-800 text-xs">
                                 ➕
                             </button>
                         </div>
@@ -693,48 +862,56 @@
                             const isToday = action.deadline === today && !action.completed;
                             
                             return `
-                                <div class="flex flex-col gap-2">
+                                <div class="flex flex-col gap-1">
                                     <div class="flex items-center gap-2">
                                         <button onclick="toggleActionItem(${bucket.id}, ${action.id})" class="flex-shrink-0 ${action.completed ? 'text-green-600' : 'text-gray-400'}">
                                             ${action.completed ? '✅' : '⭕'}
                                         </button>
-                                        <span class="flex-1 text-sm ${action.completed ? 'line-through text-gray-500' : 'text-gray-700'}">
-                                            ${action.text}
-                                        </span>
-                                        <button onclick="deleteActionItem(${bucket.id}, ${action.id})" class="text-red-500 hover:text-red-700">
-                                            ❌
-                                        </button>
+                                        ${editingAction === action.id ? `
+                                            <input type="text" value="${action.text}" 
+                                                   onkeypress="if(event.key==='Enter') saveEditAction(${action.id}, this.value); if(event.key==='Escape') cancelEditAction();"
+                                                   onblur="saveEditAction(${action.id}, this.value)"
+                                                   class="flex-1 px-1 py-0.5 text-xs border border-blue-500 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                   autofocus />
+                                            <button onclick="cancelEditAction()" class="text-red-500 hover:text-red-700 text-xs">✕</button>
+                                        ` : `
+                                            <span class="flex-1 text-xs ${action.completed ? 'line-through text-gray-500' : 'text-gray-700'} cursor-pointer" 
+                                                  onclick="startEditAction(${action.id})">
+                                                ${action.text}
+                                            </span>
+                                            <button onclick="deleteActionItem(${bucket.id}, ${action.id})" class="text-red-500 hover:text-red-700 text-xs">
+                                                ❌
+                                            </button>
+                                        `}
                                     </div>
-                                    <input type="date" value="${action.deadline || ''}" onchange="setDeadline(${bucket.id}, ${action.id}, this.value)" class="ml-7 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${isToday ? 'border-red-500 bg-red-50' : 'border-gray-200'}" placeholder="마감일"/>
+                                    ${editingAction !== action.id ? `
+                                        <input type="date" value="${action.deadline || ''}" onchange="setDeadline(${bucket.id}, ${action.id}, this.value)" class="ml-5 px-1 py-0.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${isToday ? 'border-red-500 bg-red-50' : 'border-gray-200'}" />
+                                    ` : ''}
                                 </div>
                             `;
                         }).join('')}
                     </div>
-
-                    <!-- 진행률 표시 -->
-                    <div class="mt-4">
-                        <div class="flex justify-between text-xs text-gray-500 mb-1">
-                            <span>진행률</span>
-                            <span>${progressPercentage}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: ${progressPercentage}%"></div>
-                        </div>
-                    </div>
                 ` : `
                     <!-- 접혀있을 때 요약 정보 -->
-                    <div class="mt-2">
-                        <div class="flex justify-between text-sm text-gray-600 mb-1">
-                            <span>단계: ${bucket.stage}</span>
-                            <span>완료: ${completedCount}/${actions.length}</span>
+                    <div class="mt-1">
+                        <div class="flex justify-between text-xs text-gray-600">
+                            <span>${bucket.stage}</span>
                         </div>
-                        ${(bucket.unit_price || bucket.quantity) ? `
-                            <div class="text-xs text-gray-500 mb-2">
-                                ${bucket.unit_price ? `단가: ${bucket.unit_price}원` : ''}
-                                ${bucket.unit_price && bucket.quantity ? ' | ' : ''}
-                                ${bucket.quantity ? `수량: ${bucket.quantity}` : ''}
+                        ${(bucket.unit_price || bucket.quantity || bucket.product) ? `
+                            <div class="text-xs text-gray-500 mt-1">
+                                ${bucket.unit_price ? `${bucket.unit_price}원` : ''}
+                                ${(bucket.unit_price && bucket.quantity) ? ' | ' : ''}
+                                ${bucket.quantity ? `${bucket.quantity}` : ''}
+                                ${((bucket.unit_price || bucket.quantity) && bucket.product) ? ' | ' : ''}
+                                ${bucket.product ? `${bucket.product}` : ''}
                             </div>
                         ` : ''}
+                    </div>
+                `}
+            `;
+
+            return div;
+        }
                         <div class="w-full bg-gray-200 rounded-full h-1 mt-2">
                             <div class="bg-blue-600 h-1 rounded-full transition-all duration-300" style="width: ${progressPercentage}%"></div>
                         </div>
