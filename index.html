@@ -45,10 +45,16 @@
                 <button id="addBucketBtn" class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     ➕ 새 광고주 추가
                 </button>
-                <button id="sortBtn" class="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                    <span>📅</span>
-                    <span id="sortText">마감일 오름차순</span>
-                </button>
+                <div class="flex gap-2">
+                    <button id="toggleBucketCompletedBtn" class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
+                        <span>👁️</span>
+                        <span id="toggleBucketCompletedText">완료항목 숨기기</span>
+                    </button>
+                    <button id="sortBtn" class="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        <span>📅</span>
+                        <span id="sortText">마감일 오름차순</span>
+                    </button>
+                </div>
             </div>
             
             <!-- 추가 폼 (숨김) -->
@@ -188,6 +194,8 @@
             bucketsContainer = document.getElementById('bucketsContainer');
             emptyState = document.getElementById('emptyState');
             exportExcelBtn = document.getElementById('exportExcelBtn');
+            toggleBucketCompletedBtn = document.getElementById('toggleBucketCompletedBtn');
+            toggleBucketCompletedText = document.getElementById('toggleBucketCompletedText');
         }
 
         // 이벤트 리스너 등록
@@ -200,6 +208,7 @@
             sortBtn.addEventListener('click', toggleSort);
             todoSortBtn.addEventListener('click', toggleTodoSort);
             toggleCompletedBtn.addEventListener('click', toggleCompletedVisibility);
+            toggleBucketCompletedBtn.addEventListener('click', toggleBucketCompletedVisibility);
             exportExcelBtn.addEventListener('click', exportToExcel);
 
             bucketNameInput.addEventListener('keypress', (e) => {
@@ -222,11 +231,7 @@
                             '광고주명': bucket.name,
                             '액션아이템': action.text,
                             '마감일자': action.deadline || '',
-                            '완료여부': action.completed ? '완료' : '미완료',
-                            '단계': bucket.stage,
-                            '단가': bucket.unit_price || '',
-                            '수량': bucket.quantity || '',
-                            '상품': bucket.product || ''
+                            '완료여부': action.completed ? '완료' : '미완료'
                         });
                     });
                 });
@@ -238,7 +243,9 @@
 
                 // 현재 표시 중인 필터링된 항목만 내보내기 (선택사항)
                 let filteredItems = allItems;
-                if (!showCompletedTodos) {
+                if (currentView === 'todo' && !showCompletedTodos) {
+                    filteredItems = allItems.filter(item => item.완료여부 === '미완료');
+                } else if (currentView === 'buckets' && !showCompletedInBuckets) {
                     filteredItems = allItems.filter(item => item.완료여부 === '미완료');
                 }
 
@@ -251,11 +258,7 @@
                     { wch: 20 }, // 광고주명
                     { wch: 30 }, // 액션아이템
                     { wch: 12 }, // 마감일자
-                    { wch: 10 }, // 완료여부
-                    { wch: 15 }, // 단계
-                    { wch: 12 }, // 단가
-                    { wch: 15 }, // 수량
-                    { wch: 10 }  // 상품
+                    { wch: 10 }  // 완료여부
                 ];
                 ws['!cols'] = colWidths;
 
@@ -406,6 +409,23 @@
             }
         }
 
+        // 버킷 뷰에서 완료된 액션아이템 가시성 토글
+        function toggleBucketCompletedVisibility() {
+            showCompletedInBuckets = !showCompletedInBuckets;
+            
+            if (showCompletedInBuckets) {
+                toggleBucketCompletedBtn.className = 'flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors';
+                toggleBucketCompletedText.textContent = '완료항목 숨기기';
+            } else {
+                toggleBucketCompletedBtn.className = 'flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors';
+                toggleBucketCompletedText.textContent = '완료항목 보기';
+            }
+            
+            if (currentView === 'buckets') {
+                renderBuckets();
+            }
+        }
+
         // 오늘 마감 업데이트
         function updateTodayDeadlines() {
             const today = new Date().toISOString().split('T')[0];
@@ -505,7 +525,12 @@
 
         // 액션 아이템 정렬
         function getSortedActions(actions) {
-            return [...actions].sort((a, b) => {
+            // 완료 여부로 먼저 분리
+            const incompleteActions = actions.filter(action => !action.completed);
+            const completedActions = actions.filter(action => action.completed);
+            
+            // 각각을 마감일로 정렬
+            const sortedIncomplete = incompleteActions.sort((a, b) => {
                 if (!a.deadline && !b.deadline) return 0;
                 if (!a.deadline) return sortOrder === 'asc' ? 1 : -1;
                 if (!b.deadline) return sortOrder === 'asc' ? -1 : 1;
@@ -514,6 +539,19 @@
                 const dateB = new Date(b.deadline);
                 return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
             });
+            
+            const sortedCompleted = completedActions.sort((a, b) => {
+                if (!a.deadline && !b.deadline) return 0;
+                if (!a.deadline) return sortOrder === 'asc' ? 1 : -1;
+                if (!b.deadline) return sortOrder === 'asc' ? -1 : 1;
+                
+                const dateA = new Date(a.deadline);
+                const dateB = new Date(b.deadline);
+                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            });
+            
+            // 미완료를 위에, 완료를 아래에 배치
+            return [...sortedIncomplete, ...sortedCompleted];
         }
 
         // 투두뷰 렌더링
@@ -605,7 +643,14 @@
             div.className = 'bg-white rounded-lg shadow-md p-4';
 
             const actions = bucket.actions || [];
-            const sortedActions = getSortedActions(actions);
+            let filteredActions = actions;
+            
+            // 버킷 뷰에서 완료항목 숨기기 필터 적용
+            if (!showCompletedInBuckets) {
+                filteredActions = actions.filter(action => !action.completed);
+            }
+            
+            const sortedActions = getSortedActions(filteredActions);
             const isCollapsed = collapsedBuckets[bucket.id] !== false;
             const isContractCollapsed = collapsedContracts[bucket.id] !== false;
 
