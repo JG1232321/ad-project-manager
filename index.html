@@ -119,6 +119,10 @@
                         <span>➕</span>
                         <span>새 액션아이템</span>
                     </button>
+                    <button id="manageRecurringBtn" class="flex items-center gap-2 px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                        <span>🔄</span>
+                        <span>반복 관리</span>
+                    </button>
                     <button id="exportExcelBtn" class="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
                         <span>📊</span>
                         <span>엑셀 다운로드</span>
@@ -163,6 +167,77 @@
             <div id="todoEmpty" class="text-gray-500 text-center py-8 hidden">등록된 액션아이템이 없습니다.</div>
         </div>
 
+        <!-- 반복 관리 뷰 -->
+        <div id="recurringView" class="bg-white rounded-lg shadow-md p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">반복 작업 관리</h2>
+                <div class="flex gap-2">
+                    <button id="addRecurringBtn" class="flex items-center gap-2 px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                        <span>➕</span>
+                        <span>새 반복 작업</span>
+                    </button>
+                    <button id="backToTodoBtn" class="flex items-center gap-2 px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                        <span>←</span>
+                        <span>돌아가기</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 반복 작업 추가 폼 -->
+            <div id="addRecurringForm" class="bg-gray-50 p-4 rounded-lg mb-4 hidden">
+                <h3 class="text-lg font-semibold mb-3">새 반복 작업 등록</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">광고주 선택 *</label>
+                        <select id="recurringBucketSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">광고주를 선택하세요</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">작업명 *</label>
+                        <input type="text" id="recurringTaskName" placeholder="반복 작업명을 입력하세요" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">반복 주기 *</label>
+                        <select id="recurringTypeSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="daily">매일</option>
+                            <option value="weekly">매주</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">생성 시간 *</label>
+                        <input type="time" id="recurringTimeSelect" value="09:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">시작일 *</label>
+                        <input type="date" id="recurringStartDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">종료일</label>
+                        <input type="date" id="recurringEndDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
+                        <select id="recurringStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="active">활성</option>
+                            <option value="paused">일시정지</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="confirmAddRecurringBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">등록</button>
+                    <button id="cancelAddRecurringBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">취소</button>
+                </div>
+            </div>
+            
+            <div id="recurringList" class="space-y-3"></div>
+            <div id="recurringEmpty" class="text-gray-500 text-center py-8">등록된 반복 작업이 없습니다.</div>
+        </div>
+
         <!-- 메모장 뷰 -->
         <div id="memoView" class="bg-white rounded-lg shadow-md p-6 hidden">
             <div class="flex justify-between items-center mb-4">
@@ -198,6 +273,7 @@
         // 전역 변수
         let supabase;
         let buckets = [];
+        let recurringTasks = [];
         let userId;
         let currentView = 'buckets';
         let sortOrder = 'asc';
@@ -220,12 +296,16 @@
         let bucketsViewBtn, todoViewBtn, memoViewBtn, addBucketSection, addBucketBtn, addBucketForm;
         let bucketNameInput, unitPriceInput, quantityInput, productInput, contractTermsInput;
         let confirmAddBtn, cancelAddBtn, sortBtn, sortText;
-        let todayDeadlines, todayDeadlinesList, todoView, memoView, bucketsView;
+        let todayDeadlines, todayDeadlinesList, todoView, memoView, bucketsView, recurringView;
         let todoList, todoEmpty, todoSortBtn, todoSortText;
         let toggleCompletedBtn, toggleCompletedText, bucketsContainer, emptyState;
         let exportExcelBtn, toggleBucketCompletedBtn, toggleBucketCompletedText;
         let addTodoBtn, addTodoForm, todoBucketSelect, todoDeadlineInput, todoTextInput;
         let confirmAddTodoBtn, cancelAddTodoBtn, memoTextarea, saveMemoBtn, clearMemoBtn, memoStatus;
+        let manageRecurringBtn, backToTodoBtn, addRecurringBtn, addRecurringForm;
+        let recurringBucketSelect, recurringTaskName, recurringTypeSelect, recurringTimeSelect;
+        let recurringStartDate, recurringEndDate, recurringStatus, confirmAddRecurringBtn, cancelAddRecurringBtn;
+        let recurringList, recurringEmpty;
 
         // 앱 초기화
         async function initApp() {
@@ -247,6 +327,13 @@
                 
                 // 데이터 로드
                 await loadData();
+                
+                // 반복 작업 로드
+                loadRecurringTasks();
+                
+                // 반복 작업 체크 시작
+                checkAndCreateRecurringActions();
+                setInterval(checkAndCreateRecurringActions, 60000); // 1분마다 체크
                 
                 // 오늘 마감 업데이트
                 updateTodayDeadlines();
@@ -280,6 +367,7 @@
             todoView = document.getElementById('todoView');
             memoView = document.getElementById('memoView');
             bucketsView = document.getElementById('bucketsView');
+            recurringView = document.getElementById('recurringView');
             todoList = document.getElementById('todoList');
             todoEmpty = document.getElementById('todoEmpty');
             todoSortBtn = document.getElementById('todoSortBtn');
@@ -302,6 +390,23 @@
             saveMemoBtn = document.getElementById('saveMemoBtn');
             clearMemoBtn = document.getElementById('clearMemoBtn');
             memoStatus = document.getElementById('memoStatus');
+            
+            // 반복 관리 관련 DOM 요소들
+            manageRecurringBtn = document.getElementById('manageRecurringBtn');
+            backToTodoBtn = document.getElementById('backToTodoBtn');
+            addRecurringBtn = document.getElementById('addRecurringBtn');
+            addRecurringForm = document.getElementById('addRecurringForm');
+            recurringBucketSelect = document.getElementById('recurringBucketSelect');
+            recurringTaskName = document.getElementById('recurringTaskName');
+            recurringTypeSelect = document.getElementById('recurringTypeSelect');
+            recurringTimeSelect = document.getElementById('recurringTimeSelect');
+            recurringStartDate = document.getElementById('recurringStartDate');
+            recurringEndDate = document.getElementById('recurringEndDate');
+            recurringStatus = document.getElementById('recurringStatus');
+            confirmAddRecurringBtn = document.getElementById('confirmAddRecurringBtn');
+            cancelAddRecurringBtn = document.getElementById('cancelAddRecurringBtn');
+            recurringList = document.getElementById('recurringList');
+            recurringEmpty = document.getElementById('recurringEmpty');
         }
 
         // 이벤트 리스너 등록
@@ -339,6 +444,13 @@
 
             // 메모 자동저장
             memoTextarea.addEventListener('input', autoSaveMemo);
+            
+            // 반복 관리 관련
+            manageRecurringBtn.addEventListener('click', () => switchView('recurring'));
+            backToTodoBtn.addEventListener('click', () => switchView('todo'));
+            addRecurringBtn.addEventListener('click', showAddRecurringForm);
+            confirmAddRecurringBtn.addEventListener('click', addRecurringTask);
+            cancelAddRecurringBtn.addEventListener('click', hideAddRecurringForm);
         }
 
         // 에러 표시
@@ -396,6 +508,7 @@
             todoView.classList.add('hidden');
             memoView.classList.add('hidden');
             bucketsView.classList.add('hidden');
+            recurringView.classList.add('hidden');
             
             if (view === 'buckets') {
                 bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
@@ -411,6 +524,10 @@
                 memoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
                 memoView.classList.remove('hidden');
                 loadMemo();
+            } else if (view === 'recurring') {
+                recurringView.classList.remove('hidden');
+                renderRecurringView();
+                updateRecurringBucketSelect();
             }
         }
 
@@ -1158,6 +1275,216 @@
             setTimeout(() => {
                 notification.remove();
             }, 3000);
+        }
+
+        // 반복 작업 관리 기능
+        function loadRecurringTasks() {
+            const savedTasks = localStorage.getItem(`recurring_tasks_${userId}`);
+            recurringTasks = savedTasks ? JSON.parse(savedTasks) : [];
+        }
+
+        function saveRecurringTasks() {
+            localStorage.setItem(`recurring_tasks_${userId}`, JSON.stringify(recurringTasks));
+        }
+
+        function showAddRecurringForm() {
+            addRecurringForm.classList.remove('hidden');
+            updateRecurringBucketSelect();
+            
+            // 기본값 설정
+            const today = new Date();
+            recurringStartDate.value = today.toISOString().split('T')[0];
+            recurringTaskName.focus();
+        }
+
+        function hideAddRecurringForm() {
+            addRecurringForm.classList.add('hidden');
+            recurringBucketSelect.value = '';
+            recurringTaskName.value = '';
+            recurringTypeSelect.value = 'daily';
+            recurringTimeSelect.value = '09:00';
+            recurringStartDate.value = '';
+            recurringEndDate.value = '';
+            recurringStatus.value = 'active';
+        }
+
+        function updateRecurringBucketSelect() {
+            recurringBucketSelect.innerHTML = '<option value="">광고주를 선택하세요</option>';
+            buckets.forEach(bucket => {
+                const option = document.createElement('option');
+                option.value = bucket.id;
+                option.textContent = bucket.name;
+                recurringBucketSelect.appendChild(option);
+            });
+        }
+
+        function addRecurringTask() {
+            const bucketId = parseInt(recurringBucketSelect.value);
+            const taskName = recurringTaskName.value.trim();
+            const type = recurringTypeSelect.value;
+            const time = recurringTimeSelect.value;
+            const startDate = recurringStartDate.value;
+            const endDate = recurringEndDate.value || null;
+            const status = recurringStatus.value;
+
+            if (!bucketId || !taskName || !startDate) {
+                alert('필수 항목을 모두 입력해주세요.');
+                return;
+            }
+
+            const recurringTaskData = {
+                id: Date.now(),
+                bucket_id: bucketId,
+                task_name: taskName,
+                recurring_type: type,
+                recurring_time: time,
+                start_date: startDate,
+                end_date: endDate,
+                status: status,
+                last_generated: null,
+                created_at: new Date().toISOString()
+            };
+
+            recurringTasks.push(recurringTaskData);
+            saveRecurringTasks();
+            hideAddRecurringForm();
+            renderRecurringView();
+            
+            showNotification('반복 작업이 등록되었습니다.', 'success');
+        }
+
+        function renderRecurringView() {
+            if (recurringTasks.length === 0) {
+                recurringList.innerHTML = '';
+                recurringEmpty.classList.remove('hidden');
+                return;
+            }
+
+            recurringEmpty.classList.add('hidden');
+            
+            recurringList.innerHTML = recurringTasks.map(task => {
+                const bucket = buckets.find(b => b.id === task.bucket_id);
+                const bucketName = bucket ? bucket.name : '삭제된 광고주';
+                
+                return `
+                    <div class="p-4 border border-gray-200 rounded-lg ${task.status === 'active' ? 'bg-white' : 'bg-gray-50'}">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-semibold text-gray-800">${task.task_name.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</h4>
+                                <p class="text-sm text-gray-600">[${bucketName}] - ${task.recurring_type === 'daily' ? '매일' : '매주'} ${task.recurring_time}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="toggleRecurringStatus(${task.id})" class="px-2 py-1 text-xs rounded ${task.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}">
+                                    ${task.status === 'active' ? '활성' : '일시정지'}
+                                </button>
+                                <button onclick="deleteRecurringTask(${task.id})" class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">
+                                    삭제
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <p>시작일: ${task.start_date} ${task.end_date ? `| 종료일: ${task.end_date}` : ''}</p>
+                            <p>마지막 생성: ${task.last_generated || '아직 생성된 작업 없음'}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleRecurringStatus(taskId) {
+            const task = recurringTasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            task.status = task.status === 'active' ? 'paused' : 'active';
+            saveRecurringTasks();
+            renderRecurringView();
+            
+            showNotification(`반복 작업이 ${task.status === 'active' ? '활성화' : '일시정지'}되었습니다.`, 'info');
+        }
+
+        function deleteRecurringTask(taskId) {
+            if (!confirm('이 반복 작업을 삭제하시겠습니까?')) return;
+
+            recurringTasks = recurringTasks.filter(task => task.id !== taskId);
+            saveRecurringTasks();
+            renderRecurringView();
+            
+            showNotification('반복 작업이 삭제되었습니다.', 'info');
+        }
+
+        // 반복 작업 스케줄링 - 설정된 시간에 자동으로 액션아이템 생성
+        function checkAndCreateRecurringActions() {
+            const now = new Date();
+            const currentTime = now.toTimeString().slice(0, 5); // HH:MM 형식
+            const currentDate = now.toISOString().split('T')[0];
+            const currentDay = now.getDay(); // 0=일요일, 1=월요일, ...
+
+            recurringTasks.forEach(task => {
+                if (task.status !== 'active') return;
+                
+                // 종료일 체크
+                if (task.end_date && currentDate > task.end_date) return;
+                
+                // 시작일 체크
+                if (currentDate < task.start_date) return;
+                
+                // 시간 체크 (±2분 오차 허용)
+                const taskTime = new Date(`1970-01-01T${task.recurring_time}:00`);
+                const currentTimeObj = new Date(`1970-01-01T${currentTime}:00`);
+                const timeDiff = Math.abs(currentTimeObj - taskTime) / (1000 * 60); // 분 단위
+                
+                if (timeDiff > 2) return; // 2분 이상 차이나면 패스
+                
+                // 마지막 생성일 체크 - 오늘 이미 생성되었으면 패스
+                if (task.last_generated === currentDate) return;
+                
+                // 주간 반복의 경우 요일 체크
+                if (task.recurring_type === 'weekly') {
+                    const startDay = new Date(task.start_date).getDay();
+                    if (startDay !== currentDay) return;
+                }
+                
+                // 해당 버킷이 존재하는지 확인
+                const bucket = buckets.find(b => b.id === task.bucket_id);
+                if (!bucket) return;
+                
+                // 액션아이템 생성
+                try {
+                    if (!bucket.actions) bucket.actions = [];
+                    
+                    const newAction = {
+                        id: Date.now() + Math.random(),
+                        text: `${task.task_name} (${currentDate})`,
+                        completed: false,
+                        deadline: null,
+                        recurring_task_id: task.id,
+                        created_at: new Date().toISOString()
+                    };
+                    
+                    bucket.actions.push(newAction);
+                    
+                    // 마지막 생성일 업데이트
+                    task.last_generated = currentDate;
+                    
+                    // 데이터 저장
+                    saveData();
+                    saveRecurringTasks();
+                    
+                    console.log(`반복 작업 생성됨: ${task.task_name} -> [${bucket.name}]`);
+                    
+                    // 현재 뷰 업데이트
+                    if (currentView === 'buckets') {
+                        renderBuckets();
+                    } else if (currentView === 'todo') {
+                        renderTodoView();
+                    }
+                    
+                    updateTodayDeadlines();
+                    
+                } catch (error) {
+                    console.error('반복 작업 생성 오류:', error);
+                }
+            });
         }
 
         // 페이지 로드시 앱 초기화
