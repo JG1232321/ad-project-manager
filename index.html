@@ -541,9 +541,14 @@
             }
         }
 
-        // 액션 아이템 정렬 (완료/미완료 분리 없이)
+        // 액션 아이템 정렬 (버킷 뷰용 - 완료된 항목을 하단으로)
         function getSortedActions(actions) {
-            return [...actions].sort((a, b) => {
+            // 완료 여부로 먼저 분리
+            const incompleteActions = actions.filter(action => !action.completed);
+            const completedActions = actions.filter(action => action.completed);
+            
+            // 각각을 마감일로 정렬
+            const sortedIncomplete = incompleteActions.sort((a, b) => {
                 if (!a.deadline && !b.deadline) return 0;
                 if (!a.deadline) return sortOrder === 'asc' ? 1 : -1;
                 if (!b.deadline) return sortOrder === 'asc' ? -1 : 1;
@@ -552,6 +557,19 @@
                 const dateB = new Date(b.deadline);
                 return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
             });
+            
+            const sortedCompleted = completedActions.sort((a, b) => {
+                if (!a.deadline && !b.deadline) return 0;
+                if (!a.deadline) return sortOrder === 'asc' ? 1 : -1;
+                if (!b.deadline) return sortOrder === 'asc' ? -1 : 1;
+                
+                const dateA = new Date(a.deadline);
+                const dateB = new Date(b.deadline);
+                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            });
+            
+            // 미완료를 위에, 완료를 아래에 배치
+            return [...sortedIncomplete, ...sortedCompleted];
         }
 
         // 투두뷰용 액션 아이템 정렬 (완료된 항목을 하단으로)
