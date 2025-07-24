@@ -663,8 +663,8 @@
 
             const actions = bucket.actions || [];
             const sortedActions = getSortedActions(actions);
-            const isCollapsed = collapsedBuckets[bucket.id] !== false;
-            const isContractCollapsed = collapsedContracts[bucket.id] !== false;
+            const isCollapsed = collapsedBuckets[bucket.id] === true;
+            const isContractCollapsed = collapsedContracts[bucket.id] === true;
 
             div.innerHTML = `
                 <div class="flex justify-between items-start mb-3">
@@ -995,6 +995,7 @@
                 updateTodayDeadlines();
                 
             } catch (error) {
+                console.error('액션아이템 업데이트 오류:', error);
                 alert('액션아이템 업데이트 중 오류가 발생했습니다: ' + error.message);
                 await loadData();
             }
@@ -1017,6 +1018,13 @@
                 }
 
                 updateTodayDeadlines();
+                
+                // 현재 뷰에 따라 렌더링
+                if (currentView === 'buckets') {
+                    renderBuckets();
+                } else {
+                    renderTodoView();
+                }
             } catch (error) {
                 console.error('마감일 설정 오류:', error);
             }
@@ -1036,6 +1044,7 @@
                 await loadData();
                 updateTodayDeadlines();
             } catch (error) {
+                console.error('액션아이템 삭제 오류:', error);
                 alert('액션아이템 삭제 중 오류가 발생했습니다: ' + error.message);
             }
         }
@@ -1057,6 +1066,7 @@
                 updateTodayDeadlines();
                 
             } catch (error) {
+                console.error('프로젝트 삭제 오류:', error);
                 alert('프로젝트 삭제 중 오류가 발생했습니다: ' + error.message);
             }
         }
