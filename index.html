@@ -338,6 +338,8 @@
         // 데이터 로드
         async function loadData() {
             try {
+                console.log('데이터 로드 시작, 현재 뷰:', currentView);
+                
                 const { data, error } = await supabase
                     .from('buckets')
                     .select('*, actions(*)')
@@ -347,11 +349,14 @@
                 if (error) throw error;
 
                 buckets = data || [];
+                console.log('로드된 버킷 수:', buckets.length);
                 
                 // 현재 뷰에 따라 렌더링
                 if (currentView === 'buckets') {
+                    console.log('버킷 뷰 렌더링');
                     renderBuckets();
                 } else {
+                    console.log('투두 뷰 렌더링');
                     renderTodoView();
                 }
             } catch (error) {
@@ -363,6 +368,7 @@
 
         // 뷰 전환
         function switchView(view) {
+            console.log('뷰 전환:', currentView, '->', view);
             currentView = view;
             
             if (view === 'buckets') {
@@ -371,6 +377,7 @@
                 addBucketSection.classList.remove('hidden');
                 todoView.classList.add('hidden');
                 bucketsView.classList.remove('hidden');
+                console.log('버킷 뷰로 전환 완료');
             } else {
                 todoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
                 bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
@@ -378,6 +385,7 @@
                 todoView.classList.remove('hidden');
                 bucketsView.classList.add('hidden');
                 renderTodoView();
+                console.log('투두 뷰로 전환 완료');
             }
         }
 
@@ -518,10 +526,13 @@
                 if (actionsError) throw actionsError;
 
                 hideAddForm();
+                
+                // 데이터 다시 로드하고 버킷뷰 렌더링
                 await loadData();
                 updateTodayDeadlines();
                 
             } catch (error) {
+                console.error('버킷 추가 오류:', error);
                 alert('오류가 발생했습니다: ' + error.message);
             } finally {
                 confirmAddBtn.disabled = false;
@@ -641,19 +652,26 @@
 
         // 버킷 목록 렌더링
         function renderBuckets() {
+            console.log('renderBuckets 호출됨, 버킷 수:', buckets.length);
+            
             if (buckets.length === 0) {
+                console.log('버킷이 없어서 empty state 표시');
                 emptyState.classList.remove('hidden');
                 bucketsContainer.innerHTML = '';
                 return;
             }
 
+            console.log('버킷들을 렌더링 중...');
             emptyState.classList.add('hidden');
             bucketsContainer.innerHTML = '';
 
-            buckets.forEach(bucket => {
+            buckets.forEach((bucket, index) => {
+                console.log(`버킷 ${index} 렌더링:`, bucket.name);
                 const bucketElement = createBucketElement(bucket);
                 bucketsContainer.appendChild(bucketElement);
             });
+            
+            console.log('버킷 렌더링 완료');
         }
 
         // 버킷 요소 생성
