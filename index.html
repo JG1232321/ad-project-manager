@@ -347,7 +347,13 @@
                 if (error) throw error;
 
                 buckets = data || [];
-                renderBuckets();
+                
+                // 현재 뷰에 따라 렌더링
+                if (currentView === 'buckets') {
+                    renderBuckets();
+                } else {
+                    renderTodoView();
+                }
             } catch (error) {
                 console.error('데이터 로드 오류:', error);
                 buckets = [];
@@ -523,8 +529,21 @@
             }
         }
 
-        // 액션 아이템 정렬
+        // 액션 아이템 정렬 (완료/미완료 분리 없이)
         function getSortedActions(actions) {
+            return [...actions].sort((a, b) => {
+                if (!a.deadline && !b.deadline) return 0;
+                if (!a.deadline) return sortOrder === 'asc' ? 1 : -1;
+                if (!b.deadline) return sortOrder === 'asc' ? -1 : 1;
+                
+                const dateA = new Date(a.deadline);
+                const dateB = new Date(b.deadline);
+                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            });
+        }
+
+        // 투두뷰용 액션 아이템 정렬 (완료된 항목을 하단으로)
+        function getSortedActionsForTodo(actions) {
             // 완료 여부로 먼저 분리
             const incompleteActions = actions.filter(action => !action.completed);
             const completedActions = actions.filter(action => action.completed);
@@ -576,8 +595,8 @@
             const incompleteItems = filteredItems.filter(item => !item.completed);
             const completedItems = filteredItems.filter(item => item.completed);
             
-            const sortedIncompleteItems = getSortedActions(incompleteItems);
-            const sortedCompletedItems = getSortedActions(completedItems);
+            const sortedIncompleteItems = getSortedActionsForTodo(incompleteItems);
+            const sortedCompletedItems = getSortedActionsForTodo(completedItems);
             
             const sortedItems = [...sortedIncompleteItems, ...sortedCompletedItems];
 
@@ -643,14 +662,7 @@
             div.className = 'bg-white rounded-lg shadow-md p-4';
 
             const actions = bucket.actions || [];
-            let filteredActions = actions;
-            
-            // 버킷 뷰에서 완료항목 숨기기 필터 적용
-            if (!showCompletedInBuckets) {
-                filteredActions = actions.filter(action => !action.completed);
-            }
-            
-            const sortedActions = getSortedActions(filteredActions);
+            const sortedActions = getSortedActions(actions);
             const isCollapsed = collapsedBuckets[bucket.id] !== false;
             const isContractCollapsed = collapsedContracts[bucket.id] !== false;
 
@@ -750,6 +762,11 @@
                         </div>
                         
                         ${sortedActions.map(action => {
+                            // 완료된 액션아이템이 숨김 설정되어 있으면 건너뛰기
+                            if (!showCompletedInBuckets && action.completed) {
+                                return '';
+                            }
+                            
                             const today = new Date().toISOString().split('T')[0];
                             const isToday = action.deadline === today && !action.completed;
                             
@@ -781,7 +798,7 @@
                                     ` : ''}
                                 </div>
                             `;
-                        }).join('')}
+                        }).filter(html => html !== '').join('')}
                     </div>
                 ` : `
                     <!-- 접혀있을 때 요약 정보 -->
