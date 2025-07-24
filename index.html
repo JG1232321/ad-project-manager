@@ -36,6 +36,9 @@
                 <button id="todoViewBtn" class="px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                     투두리스트
                 </button>
+                <button id="memoViewBtn" class="px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                    메모장
+                </button>
             </div>
         </div>
 
@@ -102,6 +105,10 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-gray-800">전체 액션아이템</h2>
                 <div class="flex gap-2">
+                    <button id="addTodoBtn" class="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <span>➕</span>
+                        <span>새 액션아이템</span>
+                    </button>
                     <button id="exportExcelBtn" class="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                         <span>📊</span>
                         <span>엑셀 다운로드</span>
@@ -116,8 +123,86 @@
                     </button>
                 </div>
             </div>
+            
+            <!-- 새 액션아이템 추가 폼 -->
+            <div id="addTodoForm" class="bg-gray-50 p-4 rounded-lg mb-4 hidden">
+                <h3 class="text-lg font-semibold mb-3">새 액션아이템 추가</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">광고주 선택 *</label>
+                        <select id="todoBucketSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">광고주를 선택하세요</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">마감일</label>
+                        <input type="date" id="todoDeadlineInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">액션아이템 내용 *</label>
+                    <input type="text" id="todoTextInput" placeholder="액션아이템 내용을 입력하세요" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- 반복 설정 -->
+                <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+                    <div class="flex items-center mb-3">
+                        <input type="checkbox" id="enableRecurringCheckbox" class="mr-2">
+                        <label for="enableRecurringCheckbox" class="text-sm font-medium text-gray-700">반복 설정</label>
+                    </div>
+                    
+                    <div id="recurringOptions" class="grid grid-cols-1 md:grid-cols-3 gap-4 hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">반복 주기</label>
+                            <select id="recurringType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="daily">매일</option>
+                                <option value="weekly">매주</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">생성 시간</label>
+                            <input type="time" id="recurringTime" value="09:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">반복 기간</label>
+                            <select id="recurringDuration" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="7">1주일</option>
+                                <option value="14">2주일</option>
+                                <option value="30">1개월</option>
+                                <option value="90">3개월</option>
+                                <option value="365">1년</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button id="confirmAddTodoBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">추가</button>
+                    <button id="cancelAddTodoBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">취소</button>
+                </div>
+            </div>
+            
             <div id="todoList" class="space-y-3"></div>
             <div id="todoEmpty" class="text-gray-500 text-center py-8 hidden">등록된 액션아이템이 없습니다.</div>
+        </div>
+
+        <!-- 메모장 뷰 -->
+        <div id="memoView" class="bg-white rounded-lg shadow-md p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">메모장</h2>
+                <div class="flex gap-2">
+                    <button id="saveMemoBtn" class="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <span>💾</span>
+                        <span>저장</span>
+                    </button>
+                    <button id="clearMemoBtn" class="flex items-center gap-2 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        <span>🗑️</span>
+                        <span>전체 삭제</span>
+                    </button>
+                </div>
+            </div>
+            <textarea id="memoTextarea" placeholder="자유롭게 메모를 작성하세요..." class="w-full h-96 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+            <div id="memoStatus" class="mt-2 text-sm text-gray-500"></div>
         </div>
 
         <!-- 버킷 뷰 -->
@@ -130,6 +215,13 @@
             </div>
         </div>
     </div>
+
+    <!-- 푸터 -->
+    <footer class="bg-gray-800 text-white py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <p class="text-sm">© 2025 광고 프로젝트 관리 시스템 | 제작자: 이재광</p>
+        </div>
+    </footer>
 
     <script>
         // Supabase 설정
@@ -170,6 +262,7 @@
         function initializeElements() {
             bucketsViewBtn = document.getElementById('bucketsViewBtn');
             todoViewBtn = document.getElementById('todoViewBtn');
+            memoViewBtn = document.getElementById('memoViewBtn');
             addBucketSection = document.getElementById('addBucketSection');
             addBucketBtn = document.getElementById('addBucketBtn');
             addBucketForm = document.getElementById('addBucketForm');
@@ -185,6 +278,7 @@
             todayDeadlines = document.getElementById('todayDeadlines');
             todayDeadlinesList = document.getElementById('todayDeadlinesList');
             todoView = document.getElementById('todoView');
+            memoView = document.getElementById('memoView');
             bucketsView = document.getElementById('bucketsView');
             todoList = document.getElementById('todoList');
             todoEmpty = document.getElementById('todoEmpty');
@@ -197,12 +291,29 @@
             exportExcelBtn = document.getElementById('exportExcelBtn');
             toggleBucketCompletedBtn = document.getElementById('toggleBucketCompletedBtn');
             toggleBucketCompletedText = document.getElementById('toggleBucketCompletedText');
+            addTodoBtn = document.getElementById('addTodoBtn');
+            addTodoForm = document.getElementById('addTodoForm');
+            todoBucketSelect = document.getElementById('todoBucketSelect');
+            todoDeadlineInput = document.getElementById('todoDeadlineInput');
+            todoTextInput = document.getElementById('todoTextInput');
+            confirmAddTodoBtn = document.getElementById('confirmAddTodoBtn');
+            cancelAddTodoBtn = document.getElementById('cancelAddTodoBtn');
+            memoTextarea = document.getElementById('memoTextarea');
+            saveMemoBtn = document.getElementById('saveMemoBtn');
+            clearMemoBtn = document.getElementById('clearMemoBtn');
+            memoStatus = document.getElementById('memoStatus');
+            enableRecurringCheckbox = document.getElementById('enableRecurringCheckbox');
+            recurringOptions = document.getElementById('recurringOptions');
+            recurringType = document.getElementById('recurringType');
+            recurringTime = document.getElementById('recurringTime');
+            recurringDuration = document.getElementById('recurringDuration');
         }
 
         // 이벤트 리스너 등록
         function setupEventListeners() {
             bucketsViewBtn.addEventListener('click', () => switchView('buckets'));
             todoViewBtn.addEventListener('click', () => switchView('todo'));
+            memoViewBtn.addEventListener('click', () => switchView('memo'));
             addBucketBtn.addEventListener('click', showAddForm);
             confirmAddBtn.addEventListener('click', addBucket);
             cancelAddBtn.addEventListener('click', hideAddForm);
@@ -211,6 +322,11 @@
             toggleCompletedBtn.addEventListener('click', toggleCompletedVisibility);
             toggleBucketCompletedBtn.addEventListener('click', toggleBucketCompletedVisibility);
             exportExcelBtn.addEventListener('click', exportToExcel);
+            addTodoBtn.addEventListener('click', showAddTodoForm);
+            confirmAddTodoBtn.addEventListener('click', addTodoItem);
+            cancelAddTodoBtn.addEventListener('click', hideAddTodoForm);
+            saveMemoBtn.addEventListener('click', saveMemo);
+            clearMemoBtn.addEventListener('click', clearMemo);
 
             bucketNameInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -218,6 +334,19 @@
                     addBucket();
                 }
             });
+            
+            todoTextInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    addTodoItem();
+                }
+            });
+
+            // 메모 자동저장
+            memoTextarea.addEventListener('input', autoSaveMemo);
+            
+            // 반복 설정 토글
+            enableRecurringCheckbox.addEventListener('change', toggleRecurringOptions);
         }
 
         // 엑셀 다운로드 기능
@@ -372,21 +501,33 @@
             console.log('뷰 전환:', currentView, '->', view);
             currentView = view;
             
+            // 모든 탭 버튼 초기화
+            bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+            todoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+            memoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+            
+            // 모든 뷰 숨기기
+            addBucketSection.classList.add('hidden');
+            todoView.classList.add('hidden');
+            memoView.classList.add('hidden');
+            bucketsView.classList.add('hidden');
+            
             if (view === 'buckets') {
                 bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
-                todoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
                 addBucketSection.classList.remove('hidden');
-                todoView.classList.add('hidden');
                 bucketsView.classList.remove('hidden');
                 console.log('버킷 뷰로 전환 완료');
-            } else {
+            } else if (view === 'todo') {
                 todoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
-                bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
-                addBucketSection.classList.add('hidden');
                 todoView.classList.remove('hidden');
-                bucketsView.classList.add('hidden');
                 renderTodoView();
+                updateTodoBucketSelect();
                 console.log('투두 뷰로 전환 완료');
+            } else if (view === 'memo') {
+                memoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
+                memoView.classList.remove('hidden');
+                loadMemo();
+                console.log('메모 뷰로 전환 완료');
             }
         }
 
@@ -1110,6 +1251,193 @@
 
         // 페이지 로드시 앱 초기화
         window.addEventListener('DOMContentLoaded', initApp);
+
+        // 투두리스트에서 액션아이템 추가 기능
+        function showAddTodoForm() {
+            addTodoForm.classList.remove('hidden');
+            updateTodoBucketSelect();
+            todoTextInput.focus();
+        }
+
+        function hideAddTodoForm() {
+            addTodoForm.classList.add('hidden');
+            todoBucketSelect.value = '';
+            todoDeadlineInput.value = '';
+            todoTextInput.value = '';
+            enableRecurringCheckbox.checked = false;
+            recurringOptions.classList.add('hidden');
+        }
+
+        function toggleRecurringOptions() {
+            if (enableRecurringCheckbox.checked) {
+                recurringOptions.classList.remove('hidden');
+            } else {
+                recurringOptions.classList.add('hidden');
+            }
+        }
+
+        function updateTodoBucketSelect() {
+            todoBucketSelect.innerHTML = '<option value="">광고주를 선택하세요</option>';
+            buckets.forEach(bucket => {
+                const option = document.createElement('option');
+                option.value = bucket.id;
+                option.textContent = bucket.name;
+                todoBucketSelect.appendChild(option);
+            });
+        }
+
+        async function addTodoItem() {
+            const bucketId = todoBucketSelect.value;
+            const text = todoTextInput.value.trim();
+            const deadline = todoDeadlineInput.value || null;
+            const isRecurring = enableRecurringCheckbox.checked;
+
+            if (!bucketId) {
+                alert('광고주를 선택해주세요.');
+                return;
+            }
+
+            if (!text) {
+                alert('액션아이템 내용을 입력해주세요.');
+                return;
+            }
+
+            try {
+                confirmAddTodoBtn.disabled = true;
+                confirmAddTodoBtn.textContent = '추가 중...';
+
+                if (isRecurring) {
+                    // 반복 액션아이템 생성
+                    await createRecurringActions(bucketId, text, deadline);
+                } else {
+                    // 일반 액션아이템 생성
+                    const { error } = await supabase
+                        .from('actions')
+                        .insert([{
+                            bucket_id: parseInt(bucketId),
+                            text: text,
+                            completed: false,
+                            deadline: deadline
+                        }]);
+
+                    if (error) throw error;
+                }
+
+                hideAddTodoForm();
+                await loadData();
+                updateTodayDeadlines();
+                
+            } catch (error) {
+                console.error('액션아이템 추가 오류:', error);
+                alert('액션아이템 추가 중 오류가 발생했습니다: ' + error.message);
+            } finally {
+                confirmAddTodoBtn.disabled = false;
+                confirmAddTodoBtn.textContent = '추가';
+            }
+        }
+
+        async function createRecurringActions(bucketId, text, baseDeadline) {
+            const type = recurringType.value;
+            const time = recurringTime.value;
+            const duration = parseInt(recurringDuration.value);
+            
+            const actionsToInsert = [];
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + duration);
+
+            let currentDate = new Date(startDate);
+            
+            while (currentDate <= endDate) {
+                // 마감일 계산
+                let actionDeadline = null;
+                if (baseDeadline) {
+                    const deadlineDate = new Date(currentDate);
+                    deadlineDate.setDate(deadlineDate.getDate() + 1); // 다음날을 마감일로
+                    actionDeadline = deadlineDate.toISOString().split('T')[0];
+                }
+
+                actionsToInsert.push({
+                    bucket_id: parseInt(bucketId),
+                    text: `${text} (${currentDate.toLocaleDateString()})`,
+                    completed: false,
+                    deadline: actionDeadline,
+                    recurring_info: JSON.stringify({
+                        type: type,
+                        time: time,
+                        original_text: text
+                    })
+                });
+
+                // 다음 날짜 계산
+                if (type === 'daily') {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                } else if (type === 'weekly') {
+                    currentDate.setDate(currentDate.getDate() + 7);
+                }
+            }
+
+            // 배치로 삽입 (너무 많으면 나누어서)
+            const batchSize = 50;
+            for (let i = 0; i < actionsToInsert.length; i += batchSize) {
+                const batch = actionsToInsert.slice(i, i + batchSize);
+                const { error } = await supabase
+                    .from('actions')
+                    .insert(batch);
+
+                if (error) throw error;
+            }
+
+            alert(`${actionsToInsert.length}개의 반복 액션아이템이 생성되었습니다.`);
+        }
+
+        // 메모장 기능
+        function loadMemo() {
+            const savedMemo = localStorage.getItem(`memo_${userId}`);
+            if (savedMemo) {
+                memoTextarea.value = savedMemo;
+                memoStatus.textContent = '저장된 메모를 불러왔습니다.';
+            } else {
+                memoTextarea.value = '';
+                memoStatus.textContent = '새로운 메모를 작성하세요.';
+            }
+        }
+
+        function saveMemo() {
+            const memoContent = memoTextarea.value;
+            localStorage.setItem(`memo_${userId}`, memoContent);
+            memoStatus.textContent = '메모가 저장되었습니다.';
+            
+            // 저장 완료 알림
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            notification.textContent = '메모가 저장되었습니다!';
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+        }
+
+        function clearMemo() {
+            if (confirm('정말로 모든 메모를 삭제하시겠습니까?')) {
+                memoTextarea.value = '';
+                localStorage.removeItem(`memo_${userId}`);
+                memoStatus.textContent = '메모가 삭제되었습니다.';
+            }
+        }
+
+        let autoSaveTimeout;
+        function autoSaveMemo() {
+            clearTimeout(autoSaveTimeout);
+            memoStatus.textContent = '입력 중...';
+            
+            autoSaveTimeout = setTimeout(() => {
+                const memoContent = memoTextarea.value;
+                localStorage.setItem(`memo_${userId}`, memoContent);
+                memoStatus.textContent = '자동 저장됨';
+            }, 1000);
+        }
     </script>
 </body>
 </html>
