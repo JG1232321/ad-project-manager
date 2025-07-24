@@ -206,6 +206,18 @@
                             <option value="weekly">매주</option>
                         </select>
                     </div>
+                    <div id="weeklyDayContainer" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">요일 선택 *</label>
+                        <select id="recurringWeeklyDay" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="0">일요일</option>
+                            <option value="1">월요일</option>
+                            <option value="2">화요일</option>
+                            <option value="3">수요일</option>
+                            <option value="4">목요일</option>
+                            <option value="5">금요일</option>
+                            <option value="6">토요일</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">생성 시간 *</label>
                         <input type="time" id="recurringTimeSelect" value="09:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -319,6 +331,7 @@
         let recurringBucketSelect, recurringTaskName, recurringTypeSelect, recurringTimeSelect;
         let recurringStartDate, recurringEndDate, recurringStatus, confirmAddRecurringBtn, cancelAddRecurringBtn;
         let recurringList, recurringEmpty, recurringDeadlineType, recurringCustomDays, customDaysContainer;
+        let recurringWeeklyDay, weeklyDayContainer, editingRecurringTask;
 
         // 앱 초기화
         async function initApp() {
@@ -423,6 +436,9 @@
             recurringDeadlineType = document.getElementById('recurringDeadlineType');
             recurringCustomDays = document.getElementById('recurringCustomDays');
             customDaysContainer = document.getElementById('customDaysContainer');
+            recurringWeeklyDay = document.getElementById('recurringWeeklyDay');
+            weeklyDayContainer = document.getElementById('weeklyDayContainer');
+            editingRecurringTask = null;
         }
 
         // 이벤트 리스너 등록
@@ -474,6 +490,15 @@
                     customDaysContainer.classList.remove('hidden');
                 } else {
                     customDaysContainer.classList.add('hidden');
+                }
+            });
+            
+            // 반복 주기 변경 시 요일 선택 필드 표시/숨김
+            recurringTypeSelect.addEventListener('change', function() {
+                if (this.value === 'weekly') {
+                    weeklyDayContainer.classList.remove('hidden');
+                } else {
+                    weeklyDayContainer.classList.add('hidden');
                 }
             });
         }
@@ -1313,17 +1338,24 @@
         }
 
         function showAddRecurringForm() {
+            editingRecurringTask = null; // 새 작업 추가 모드
             addRecurringForm.classList.remove('hidden');
             updateRecurringBucketSelect();
             
             // 기본값 설정
             const today = new Date();
             recurringStartDate.value = today.toISOString().split('T')[0];
+            
+            // 폼 제목 변경
+            addRecurringForm.querySelector('h3').textContent = '새 반복 작업 등록';
+            confirmAddRecurringBtn.textContent = '등록';
+            
             recurringTaskName.focus();
         }
 
         function hideAddRecurringForm() {
             addRecurringForm.classList.add('hidden');
+            editingRecurringTask = null;
             recurringBucketSelect.value = '';
             recurringTaskName.value = '';
             recurringTypeSelect.value = 'daily';
@@ -1333,7 +1365,9 @@
             recurringStatus.value = 'active';
             recurringDeadlineType.value = 'none';
             recurringCustomDays.value = '1';
+            recurringWeeklyDay.value = '1'; // 기본값: 월요일
             customDaysContainer.classList.add('hidden');
+            weeklyDayContainer.classList.add('hidden');
         }
 
         function updateRecurringBucketSelect() {
@@ -1356,33 +1390,56 @@
             const status = recurringStatus.value;
             const deadlineType = recurringDeadlineType.value;
             const customDays = parseInt(recurringCustomDays.value) || 1;
+            const weeklyDay = type === 'weekly' ? parseInt(recurringWeeklyDay.value) : null;
 
             if (!bucketId || !taskName || !startDate) {
                 alert('필수 항목을 모두 입력해주세요.');
                 return;
             }
 
-            const recurringTaskData = {
-                id: Date.now(),
-                bucket_id: bucketId,
-                task_name: taskName,
-                recurring_type: type,
-                recurring_time: time,
-                start_date: startDate,
-                end_date: endDate,
-                status: status,
-                deadline_type: deadlineType,
-                custom_days: customDays,
-                last_generated: null,
-                created_at: new Date().toISOString()
-            };
+            if (editingRecurringTask) {
+                // 수정 모드
+                const task = recurringTasks.find(t => t.id === editingRecurringTask);
+                if (task) {
+                    task.bucket_id = bucketId;
+                    task.task_name = taskName;
+                    task.recurring_type = type;
+                    task.recurring_time = time;
+                    task.start_date = startDate;
+                    task.end_date = endDate;
+                    task.status = status;
+                    task.deadline_type = deadlineType;
+                    task.custom_days = customDays;
+                    task.weekly_day = weeklyDay;
+                    task.updated_at = new Date().toISOString();
+                    
+                    showNotification('반복 작업이 수정되었습니다.', 'success');
+                }
+            } else {
+                // 새 작업 추가 모드
+                const recurringTaskData = {
+                    id: Date.now(),
+                    bucket_id: bucketId,
+                    task_name: taskName,
+                    recurring_type: type,
+                    recurring_time: time,
+                    start_date: startDate,
+                    end_date: endDate,
+                    status: status,
+                    deadline_type: deadlineType,
+                    custom_days: customDays,
+                    weekly_day: weeklyDay,
+                    last_generated: null,
+                    created_at: new Date().toISOString()
+                };
 
-            recurringTasks.push(recurringTaskData);
+                recurringTasks.push(recurringTaskData);
+                showNotification('반복 작업이 등록되었습니다.', 'success');
+            }
+
             saveRecurringTasks();
             hideAddRecurringForm();
             renderRecurringView();
-            
-            showNotification('반복 작업이 등록되었습니다.', 'success');
         }
 
         function renderRecurringView() {
@@ -1407,15 +1464,28 @@
                     }
                 };
                 
+                const getRecurringText = () => {
+                    if (task.recurring_type === 'daily') {
+                        return `매일 ${task.recurring_time}`;
+                    } else {
+                        const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+                        const dayName = task.weekly_day !== null ? dayNames[task.weekly_day] : '설정 오류';
+                        return `매주 ${dayName} ${task.recurring_time}`;
+                    }
+                };
+                
                 return `
                     <div class="p-4 border border-gray-200 rounded-lg ${task.status === 'active' ? 'bg-white' : 'bg-gray-50'}">
                         <div class="flex justify-between items-start mb-3">
                             <div>
                                 <h4 class="font-semibold text-gray-800">${task.task_name.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</h4>
-                                <p class="text-sm text-gray-600">[${bucketName}] - ${task.recurring_type === 'daily' ? '매일' : '매주'} ${task.recurring_time}</p>
+                                <p class="text-sm text-gray-600">[${bucketName}] - ${getRecurringText()}</p>
                                 <p class="text-xs text-blue-600">${getDeadlineText()}</p>
                             </div>
                             <div class="flex gap-2">
+                                <button onclick="editRecurringTask(${task.id})" class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+                                    수정
+                                </button>
                                 <button onclick="toggleRecurringStatus(${task.id})" class="px-2 py-1 text-xs rounded ${task.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}">
                                     ${task.status === 'active' ? '활성' : '일시정지'}
                                 </button>
@@ -1431,6 +1501,49 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function editRecurringTask(taskId) {
+            const task = recurringTasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            editingRecurringTask = taskId;
+            
+            // 폼 표시
+            addRecurringForm.classList.remove('hidden');
+            updateRecurringBucketSelect();
+            
+            // 기존 데이터로 폼 채우기
+            recurringBucketSelect.value = task.bucket_id;
+            recurringTaskName.value = task.task_name;
+            recurringTypeSelect.value = task.recurring_type;
+            recurringTimeSelect.value = task.recurring_time;
+            recurringStartDate.value = task.start_date;
+            recurringEndDate.value = task.end_date || '';
+            recurringStatus.value = task.status;
+            recurringDeadlineType.value = task.deadline_type || 'none';
+            recurringCustomDays.value = task.custom_days || 1;
+            
+            // 요일 설정 (주간 반복인 경우)
+            if (task.recurring_type === 'weekly') {
+                weeklyDayContainer.classList.remove('hidden');
+                recurringWeeklyDay.value = task.weekly_day || 1;
+            } else {
+                weeklyDayContainer.classList.add('hidden');
+            }
+            
+            // 커스텀 일수 설정 (해당하는 경우)
+            if (task.deadline_type === 'custom_days') {
+                customDaysContainer.classList.remove('hidden');
+            } else {
+                customDaysContainer.classList.add('hidden');
+            }
+            
+            // 폼 제목과 버튼 텍스트 변경
+            addRecurringForm.querySelector('h3').textContent = '반복 작업 수정';
+            confirmAddRecurringBtn.textContent = '수정';
+            
+            recurringTaskName.focus();
         }
 
         function toggleRecurringStatus(taskId) {
@@ -1482,8 +1595,9 @@
                 
                 // 주간 반복의 경우 요일 체크
                 if (task.recurring_type === 'weekly') {
-                    const startDay = new Date(task.start_date).getDay();
-                    if (startDay !== currentDay) return;
+                    // 새로운 방식: 설정된 요일과 현재 요일 비교
+                    const targetDay = task.weekly_day !== null ? task.weekly_day : new Date(task.start_date).getDay();
+                    if (targetDay !== currentDay) return;
                 }
                 
                 // 해당 버킷이 존재하는지 확인
