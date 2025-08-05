@@ -7,6 +7,51 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* 드래그 앤 드롭 스타일 */
+        .bucket-card {
+            transition: all 0.2s ease;
+        }
+        
+        .bucket-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .drop-zone.drag-active {
+            background-color: #f0f9ff;
+            border: 2px dashed #3b82f6;
+            border-radius: 8px;
+        }
+        
+        .drop-zone.drag-over {
+            background-color: #e0f2fe;
+            border: 2px solid #0ea5e9;
+            transform: scale(1.02);
+        }
+        
+        .bucket-card[draggable="true"] {
+            cursor: move;
+        }
+        
+        .bucket-card:active {
+            cursor: grabbing;
+        }
+        
+        /* 드래그 중일 때 선택 방지 */
+        .drop-zone.drag-active * {
+            pointer-events: none;
+        }
+        
+        .drop-zone.drag-active .bucket-card {
+            pointer-events: auto;
+        }
+        
+        /* 드래그 핸들 스타일 */
+        .bucket-card .cursor-move:hover {
+            color: #3b82f6;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <!-- 로그인 모달 -->
@@ -894,52 +939,127 @@
             renderStageColumn('진행_매출정산', stageMap['진행_매출정산'], settlementStage, settlementCount);
         }
 
-        // 단계별 컬럼 렌더링
+        // 단계별 컬럼 렌더링 (드래그 앤 드롭 지원)
         function renderStageColumn(stage, stageBuckets, container, countElement) {
             countElement.textContent = stageBuckets.length;
             
+            // 드롭 존 스타일 추가
+            container.className = 'p-4 space-y-3 min-h-[400px] drop-zone';
+            container.setAttribute('data-stage', stage);
+            
             if (stageBuckets.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm text-center py-8">해당 단계의 광고주가 없습니다.</p>';
-                return;
+                container.innerHTML = '<p class="text-gray-400 text-sm text-center py-8 pointer-events-none">해당 단계의 광고주가 없습니다.<br><span class="text-xs">다른 단계에서 드래그해서 이동하세요.</span></p>';
+            } else {
+                container.innerHTML = stageBuckets.map(bucket => {
+                    const incompleteActions = (bucket.actions || []).filter(action => !action.completed).length;
+                    const totalActions = (bucket.actions || []).length;
+                    
+                    return `
+                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all cursor-move bucket-card"
+                             draggable="true"
+                             data-bucket-id="${bucket.id}"
+                             data-current-stage="${stage}"
+                             onclick="switchToBucketView(${bucket.id})">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-400 text-xs cursor-move">⋮⋮</span>
+                                    <h4 class="font-medium text-gray-800 text-sm">${bucket.name}</h4>
+                                </div>
+                                <button onclick="event.stopPropagation(); changeStageInStageView(${bucket.id}, event)" 
+                                        class="text-gray-400 hover:text-gray-600 text-xs">
+                                    📝
+                                </button>
+                            </div>
+                            
+                            ${bucket.unit_price || bucket.quantity || bucket.product ? `
+                                <div class="text-xs text-gray-500 mb-2">
+                                    ${bucket.unit_price ? `${bucket.unit_price}원` : ''}
+                                    ${(bucket.unit_price && bucket.quantity) ? ' | ' : ''}
+                                    ${bucket.quantity ? `${bucket.quantity}` : ''}
+                                    ${((bucket.unit_price || bucket.quantity) && bucket.product) ? ' | ' : ''}
+                                    ${bucket.product ? `${bucket.product}` : ''}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-gray-600">
+                                    액션: ${totalActions - incompleteActions}/${totalActions}
+                                </span>
+                                <div class="w-16 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" 
+                                         style="width: ${totalActions > 0 ? ((totalActions - incompleteActions) / totalActions * 100) : 0}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             }
+            
+            // 드래그 앤 드롭 이벤트 리스너 추가
+            setupDragAndDropEvents(container);
+        }
 
-            container.innerHTML = stageBuckets.map(bucket => {
-                const incompleteActions = (bucket.actions || []).filter(action => !action.completed).length;
-                const totalActions = (bucket.actions || []).length;
+        // 드래그 앤 드롭 이벤트 설정
+        function setupDragAndDropEvents(container) {
+            // 드래그 시작
+            container.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('bucket-card')) {
+                    e.target.style.opacity = '0.5';
+                    e.dataTransfer.setData('text/plain', e.target.dataset.bucketId);
+                    e.dataTransfer.setData('source-stage', e.target.dataset.currentStage);
+                    
+                    // 모든 드롭 존에 하이라이트 추가
+                    document.querySelectorAll('.drop-zone').forEach(zone => {
+                        zone.classList.add('drag-active');
+                    });
+                }
+            });
+
+            // 드래그 종료
+            container.addEventListener('dragend', (e) => {
+                if (e.target.classList.contains('bucket-card')) {
+                    e.target.style.opacity = '1';
+                    
+                    // 모든 드롭 존에서 하이라이트 제거
+                    document.querySelectorAll('.drop-zone').forEach(zone => {
+                        zone.classList.remove('drag-active', 'drag-over');
+                    });
+                }
+            });
+
+            // 드래그 오버 (드롭 존 위를 지날 때)
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                container.classList.add('drag-over');
+            });
+
+            // 드래그 리브 (드롭 존을 벗어날 때)
+            container.addEventListener('dragleave', (e) => {
+                // 컨테이너 밖으로 완전히 나갔을 때만 클래스 제거
+                if (!container.contains(e.relatedTarget)) {
+                    container.classList.remove('drag-over');
+                }
+            });
+
+            // 드롭 (놓을 때)
+            container.addEventListener('drop', async (e) => {
+                e.preventDefault();
                 
-                return `
-                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer"
-                         onclick="switchToBucketView(${bucket.id})">
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-medium text-gray-800 text-sm">${bucket.name}</h4>
-                            <button onclick="event.stopPropagation(); changeStageInStageView(${bucket.id}, event)" 
-                                    class="text-gray-400 hover:text-gray-600 text-xs">
-                                📝
-                            </button>
-                        </div>
-                        
-                        ${bucket.unit_price || bucket.quantity || bucket.product ? `
-                            <div class="text-xs text-gray-500 mb-2">
-                                ${bucket.unit_price ? `${bucket.unit_price}원` : ''}
-                                ${(bucket.unit_price && bucket.quantity) ? ' | ' : ''}
-                                ${bucket.quantity ? `${bucket.quantity}` : ''}
-                                ${((bucket.unit_price || bucket.quantity) && bucket.product) ? ' | ' : ''}
-                                ${bucket.product ? `${bucket.product}` : ''}
-                            </div>
-                        ` : ''}
-                        
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="text-gray-600">
-                                액션: ${totalActions - incompleteActions}/${totalActions}
-                            </span>
-                            <div class="w-16 bg-gray-200 rounded-full h-2">
-                                <div class="bg-blue-500 h-2 rounded-full" 
-                                     style="width: ${totalActions > 0 ? ((totalActions - incompleteActions) / totalActions * 100) : 0}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                const bucketId = parseInt(e.dataTransfer.getData('text/plain'));
+                const sourceStage = e.dataTransfer.getData('source-stage');
+                const targetStage = container.dataset.stage;
+                
+                // 같은 단계로 드롭하면 무시
+                if (sourceStage === targetStage) {
+                    container.classList.remove('drag-over');
+                    return;
+                }
+                
+                // 단계 변경 실행
+                await moveToStage(bucketId, targetStage);
+                
+                container.classList.remove('drag-over');
+            });
         }
 
         // 버킷 뷰로 전환하면서 특정 버킷 강조
@@ -976,9 +1096,11 @@
             event.target.closest('.bg-gray-50').innerHTML += selectHtml;
         }
 
-        // 셀렉트에서 단계 업데이트
-        async function updateStageFromSelect(bucketId, newStage) {
+        // 드래그로 단계 이동하는 함수
+        async function moveToStage(bucketId, newStage) {
             try {
+                showLoading();
+                
                 // Supabase에서 단계 업데이트
                 const { error } = await supabase
                     .from('buckets')
@@ -996,12 +1118,30 @@
                     bucket.stage = newStage;
                 }
                 
+                hideLoading();
                 renderStageView();
-                showSuccess('단계가 변경되었습니다!');
+                
+                // 단계 이름 변환
+                const stageNames = {
+                    '대기': '대기',
+                    '진행_광고제작': '광고제작',
+                    '진행_광고운영': '광고운영',
+                    '진행_매출정산': '매출정산'
+                };
+                
+                showSuccess(`${bucket?.name || '광고주'}가 ${stageNames[newStage]} 단계로 이동되었습니다!`);
             } catch (error) {
                 console.error('단계 변경 오류:', error);
+                hideLoading();
                 alert('오류가 발생했습니다: ' + error.message);
+                // 오류 발생 시 뷰 새로고침
+                renderStageView();
             }
+        }
+
+        // 기존 updateStageFromSelect 함수도 moveToStage 사용하도록 수정
+        async function updateStageFromSelect(bucketId, newStage) {
+            await moveToStage(bucketId, newStage);
         }
 
         // 정렬 토글
