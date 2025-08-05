@@ -157,6 +157,9 @@
                 <button id="todoViewBtn" class="px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                     투두리스트
                 </button>
+                <button id="recurringViewBtn" class="px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                    반복 규칙
+                </button>
                 <button id="memoViewBtn" class="px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                     메모장
                 </button>
@@ -242,7 +245,7 @@
                             <span id="waitingCount" class="bg-gray-500 text-white text-xs px-2 py-1 rounded-full">0</span>
                         </h3>
                     </div>
-                    <div id="waitingStage" class="p-4 space-y-3 min-h-[400px]"></div>
+                    <div id="waitingStage" class="p-4 space-y-3 min-h-[400px] drop-zone" data-stage="대기"></div>
                 </div>
 
                 <!-- 광고제작 단계 -->
@@ -253,7 +256,7 @@
                             <span id="creativeCount" class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">0</span>
                         </h3>
                     </div>
-                    <div id="creativeStage" class="p-4 space-y-3 min-h-[400px]"></div>
+                    <div id="creativeStage" class="p-4 space-y-3 min-h-[400px] drop-zone" data-stage="진행_광고제작"></div>
                 </div>
 
                 <!-- 광고운영 단계 -->
@@ -264,7 +267,7 @@
                             <span id="operationCount" class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">0</span>
                         </h3>
                     </div>
-                    <div id="operationStage" class="p-4 space-y-3 min-h-[400px]"></div>
+                    <div id="operationStage" class="p-4 space-y-3 min-h-[400px] drop-zone" data-stage="진행_광고운영"></div>
                 </div>
 
                 <!-- 매출정산 단계 -->
@@ -275,7 +278,7 @@
                             <span id="settlementCount" class="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">0</span>
                         </h3>
                     </div>
-                    <div id="settlementStage" class="p-4 space-y-3 min-h-[400px]"></div>
+                    <div id="settlementStage" class="p-4 space-y-3 min-h-[400px] drop-zone" data-stage="진행_매출정산"></div>
                 </div>
             </div>
         </div>
@@ -333,6 +336,117 @@
             <div id="todoEmpty" class="text-gray-500 text-center py-8 hidden">등록된 액션아이템이 없습니다.</div>
         </div>
 
+        <!-- 반복 규칙 뷰 -->
+        <div id="recurringView" class="bg-white rounded-lg shadow-md p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">반복 규칙 관리</h2>
+                <button id="addRecurringRuleBtn" class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                    <span>🔄</span>
+                    <span>새 반복 규칙</span>
+                </button>
+            </div>
+            
+            <!-- 새 반복 규칙 추가 폼 -->
+            <div id="addRecurringForm" class="bg-gray-50 p-6 rounded-lg mb-6 hidden">
+                <h3 class="text-lg font-semibold mb-4">새 반복 규칙 생성</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">규칙명 *</label>
+                        <input type="text" id="ruleNameInput" placeholder="예: 일일 성과 체크" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">광고주 선택 *</label>
+                        <select id="ruleBucketSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">광고주를 선택하세요</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">액션아이템 내용 *</label>
+                    <input type="text" id="ruleActionInput" placeholder="생성될 액션아이템 내용" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- 반복 설정 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">반복 주기 *</label>
+                        <select id="repeatTypeSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="daily">매일</option>
+                            <option value="weekly">매주</option>
+                            <option value="monthly">매월</option>
+                        </select>
+                    </div>
+                    <div id="weeklyDayContainer" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">요일 선택</label>
+                        <select id="weeklyDaySelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="1">월요일</option>
+                            <option value="2">화요일</option>
+                            <option value="3">수요일</option>
+                            <option value="4">목요일</option>
+                            <option value="5">금요일</option>
+                            <option value="6">토요일</option>
+                            <option value="0">일요일</option>
+                        </select>
+                    </div>
+                    <div id="monthlyDateContainer" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">날짜 선택</label>
+                        <select id="monthlyDateSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- 1일부터 31일까지 옵션 생성 -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">생성 시간</label>
+                        <input type="time" id="createTimeInput" value="09:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- 마감일 설정 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">마감일 설정</label>
+                        <select id="deadlineTypeSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="none">마감일 없음</option>
+                            <option value="same_day">당일 마감</option>
+                            <option value="next_day">다음날 마감</option>
+                            <option value="days_after">N일 후 마감</option>
+                        </select>
+                    </div>
+                    <div id="deadlineDaysContainer" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">마감까지 일수</label>
+                        <input type="number" id="deadlineDaysInput" value="1" min="1" max="30" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- 활성 기간 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">시작일 *</label>
+                        <input type="date" id="startDateInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">종료일 (선택사항)</label>
+                        <input type="date" id="endDateInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
+                        <select id="ruleStatusSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="active">활성</option>
+                            <option value="inactive">비활성</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button id="confirmAddRuleBtn" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">생성</button>
+                    <button id="cancelAddRuleBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">취소</button>
+                </div>
+            </div>
+
+            <!-- 반복 규칙 목록 -->
+            <div id="recurringRulesList" class="space-y-3"></div>
+            <div id="recurringEmpty" class="text-gray-500 text-center py-8">등록된 반복 규칙이 없습니다.</div>
+        </div>
+
         <!-- 메모장 뷰 -->
         <div id="memoView" class="bg-white rounded-lg shadow-md p-6 hidden">
             <div class="flex justify-between items-center mb-4">
@@ -368,6 +482,7 @@
         // 전역 변수
         let supabase;
         let buckets = [];
+        let recurringRules = [];
         let userId;
         let currentUser = null;
         let currentView = 'buckets';
@@ -376,14 +491,23 @@
         let collapsedContracts = {};
         let editingBucket = null;
         let editingAction = null;
+        let editingRule = null;
         let showCompletedTodos = true;
         let showCompletedInBuckets = true;
 
+        // 기본 액션 아이템 (단계 변경 시 자동 생성)
+        const defaultActionItems = {
+            '대기': ['광고주 요구사항 수집', '예산 및 일정 확정', '계약서 검토'],
+            '진행_광고제작': ['크리에이티브 컨셉 기획', '디자인 시안 제작', '광고주 피드백 반영', '최종 소재 승인'],
+            '진행_광고운영': ['광고 계정 세팅', '캠페인 런칭', '일일 성과 모니터링', '최적화 작업'],
+            '진행_매출정산': ['최종 성과 리포트 작성', '매출 정산', '광고주 결과 보고']
+        };
+
         // DOM 요소들
-        let bucketsViewBtn, stageViewBtn, todoViewBtn, memoViewBtn, addBucketSection, addBucketBtn, addBucketForm;
+        let bucketsViewBtn, stageViewBtn, todoViewBtn, recurringViewBtn, memoViewBtn, addBucketSection, addBucketBtn, addBucketForm;
         let bucketNameInput, unitPriceInput, quantityInput, productInput, contractTermsInput;
         let confirmAddBtn, cancelAddBtn, sortBtn, sortText, loadingIndicator;
-        let todayDeadlines, todayDeadlinesList, todoView, memoView, bucketsView, stageView;
+        let todayDeadlines, todayDeadlinesList, todoView, memoView, bucketsView, stageView, recurringView;
         let todoList, todoEmpty, todoSortBtn, todoSortText;
         let toggleCompletedBtn, toggleCompletedText, bucketsContainer, emptyState;
         let exportExcelBtn, toggleBucketCompletedBtn, toggleBucketCompletedText;
@@ -398,6 +522,13 @@
         let waitingStage, creativeStage, operationStage, settlementStage;
         let waitingCount, creativeCount, operationCount, settlementCount;
 
+        // 반복 규칙 DOM 요소들
+        let addRecurringRuleBtn, addRecurringForm, ruleNameInput, ruleBucketSelect, ruleActionInput;
+        let repeatTypeSelect, weeklyDayContainer, weeklyDaySelect, monthlyDateContainer, monthlyDateSelect;
+        let createTimeInput, deadlineTypeSelect, deadlineDaysContainer, deadlineDaysInput;
+        let startDateInput, endDateInput, ruleStatusSelect, confirmAddRuleBtn, cancelAddRuleBtn;
+        let recurringRulesList, recurringEmpty;
+
         // 앱 초기화
         async function initApp() {
             try {
@@ -410,10 +541,12 @@
                 initializeElements();
                 initializeAuthElements();
                 initializeStageElements();
+                initializeRecurringElements();
                 
                 // 이벤트 리스너 설정
                 setupEventListeners();
                 setupAuthEventListeners();
+                setupRecurringEventListeners();
                 
                 // 로그인 상태 확인
                 await checkAuthStatus();
@@ -430,6 +563,7 @@
             bucketsViewBtn = document.getElementById('bucketsViewBtn');
             stageViewBtn = document.getElementById('stageViewBtn');
             todoViewBtn = document.getElementById('todoViewBtn');
+            recurringViewBtn = document.getElementById('recurringViewBtn');
             memoViewBtn = document.getElementById('memoViewBtn');
             addBucketSection = document.getElementById('addBucketSection');
             addBucketBtn = document.getElementById('addBucketBtn');
@@ -450,6 +584,7 @@
             memoView = document.getElementById('memoView');
             bucketsView = document.getElementById('bucketsView');
             stageView = document.getElementById('stageView');
+            recurringView = document.getElementById('recurringView');
             todoList = document.getElementById('todoList');
             todoEmpty = document.getElementById('todoEmpty');
             todoSortBtn = document.getElementById('todoSortBtn');
@@ -501,11 +636,49 @@
             settlementCount = document.getElementById('settlementCount');
         }
 
+        // 반복 규칙 DOM 요소 초기화
+        function initializeRecurringElements() {
+            addRecurringRuleBtn = document.getElementById('addRecurringRuleBtn');
+            addRecurringForm = document.getElementById('addRecurringForm');
+            ruleNameInput = document.getElementById('ruleNameInput');
+            ruleBucketSelect = document.getElementById('ruleBucketSelect');
+            ruleActionInput = document.getElementById('ruleActionInput');
+            repeatTypeSelect = document.getElementById('repeatTypeSelect');
+            weeklyDayContainer = document.getElementById('weeklyDayContainer');
+            weeklyDaySelect = document.getElementById('weeklyDaySelect');
+            monthlyDateContainer = document.getElementById('monthlyDateContainer');
+            monthlyDateSelect = document.getElementById('monthlyDateSelect');
+            createTimeInput = document.getElementById('createTimeInput');
+            deadlineTypeSelect = document.getElementById('deadlineTypeSelect');
+            deadlineDaysContainer = document.getElementById('deadlineDaysContainer');
+            deadlineDaysInput = document.getElementById('deadlineDaysInput');
+            startDateInput = document.getElementById('startDateInput');
+            endDateInput = document.getElementById('endDateInput');
+            ruleStatusSelect = document.getElementById('ruleStatusSelect');
+            confirmAddRuleBtn = document.getElementById('confirmAddRuleBtn');
+            cancelAddRuleBtn = document.getElementById('cancelAddRuleBtn');
+            recurringRulesList = document.getElementById('recurringRulesList');
+            recurringEmpty = document.getElementById('recurringEmpty');
+
+            // 월별 날짜 옵션 생성
+            for (let i = 1; i <= 31; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i}일`;
+                monthlyDateSelect.appendChild(option);
+            }
+
+            // 기본값 설정
+            const today = new Date();
+            startDateInput.value = today.toISOString().split('T')[0];
+        }
+
         // 이벤트 리스너 등록
         function setupEventListeners() {
             bucketsViewBtn.addEventListener('click', () => switchView('buckets'));
             stageViewBtn.addEventListener('click', () => switchView('stage'));
             todoViewBtn.addEventListener('click', () => switchView('todo'));
+            recurringViewBtn.addEventListener('click', () => switchView('recurring'));
             memoViewBtn.addEventListener('click', () => switchView('memo'));
             addBucketBtn.addEventListener('click', showAddForm);
             confirmAddBtn.addEventListener('click', addBucket);
@@ -563,6 +736,41 @@
             });
         }
 
+        // 반복 규칙 이벤트 리스너
+        function setupRecurringEventListeners() {
+            addRecurringRuleBtn.addEventListener('click', showAddRecurringForm);
+            confirmAddRuleBtn.addEventListener('click', addRecurringRule);
+            cancelAddRuleBtn.addEventListener('click', hideAddRecurringForm);
+
+            // 반복 주기 변경 시 옵션 표시/숨김
+            repeatTypeSelect.addEventListener('change', function() {
+                weeklyDayContainer.classList.add('hidden');
+                monthlyDateContainer.classList.add('hidden');
+                
+                if (this.value === 'weekly') {
+                    weeklyDayContainer.classList.remove('hidden');
+                } else if (this.value === 'monthly') {
+                    monthlyDateContainer.classList.remove('hidden');
+                }
+            });
+
+            // 마감일 타입 변경 시 일수 입력 표시/숨김
+            deadlineTypeSelect.addEventListener('change', function() {
+                if (this.value === 'days_after') {
+                    deadlineDaysContainer.classList.remove('hidden');
+                } else {
+                    deadlineDaysContainer.classList.add('hidden');
+                }
+            });
+
+            ruleNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    addRecurringRule();
+                }
+            });
+        }
+
         // 로그인 상태 확인
         async function checkAuthStatus() {
             const savedAuth = localStorage.getItem('userAuth');
@@ -586,6 +794,9 @@
                         hideLoginModal();
                         await loadData();
                         updateTodayDeadlines();
+                        
+                        // 반복 규칙 체크 시작
+                        startRecurringCheck();
                         return;
                     }
                 } catch (error) {
@@ -682,6 +893,7 @@
                     hideLoginModal();
                     await loadData();
                     updateTodayDeadlines();
+                    startRecurringCheck();
                     showSuccess(`${userData.name}님, 로그인되었습니다!`);
                 }, 1000);
                 
@@ -778,6 +990,7 @@
                 currentUser = null;
                 userId = null;
                 buckets = [];
+                recurringRules = [];
                 userInfo.classList.add('hidden');
                 showLoginModal();
                 
@@ -850,6 +1063,19 @@
                     actionsData = actions;
                 }
 
+                // 반복 규칙 데이터 로드
+                const { data: rulesData, error: rulesError } = await supabase
+                    .from('recurring_rules')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+
+                if (rulesError) {
+                    console.error('반복 규칙 로드 오류:', rulesError);
+                } else {
+                    recurringRules = rulesData;
+                }
+
                 // 데이터 병합
                 buckets = bucketsData.map(bucket => ({
                     ...bucket,
@@ -857,6 +1083,7 @@
                 }));
 
                 console.log('로드된 버킷 수:', buckets.length);
+                console.log('로드된 반복 규칙 수:', recurringRules.length);
                 
                 // 뷰 렌더링
                 if (currentView === 'buckets') {
@@ -865,6 +1092,8 @@
                     renderStageView();
                 } else if (currentView === 'todo') {
                     renderTodoView();
+                } else if (currentView === 'recurring') {
+                    renderRecurringView();
                 }
 
                 hideLoading();
@@ -885,6 +1114,7 @@
             bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             stageViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             todoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+            recurringViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             memoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             
             // 모든 뷰 숨기기
@@ -893,6 +1123,7 @@
             memoView.classList.add('hidden');
             bucketsView.classList.add('hidden');
             stageView.classList.add('hidden');
+            recurringView.classList.add('hidden');
             
             if (view === 'buckets') {
                 bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
@@ -908,6 +1139,11 @@
                 todoView.classList.remove('hidden');
                 renderTodoView();
                 updateTodoBucketSelect();
+            } else if (view === 'recurring') {
+                recurringViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-purple-500 text-purple-600';
+                recurringView.classList.remove('hidden');
+                renderRecurringView();
+                updateRuleBucketSelect();
             } else if (view === 'memo') {
                 memoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
                 memoView.classList.remove('hidden');
@@ -1062,6 +1298,88 @@
             });
         }
 
+        // 드래그로 단계 이동하는 함수 (자동 액션아이템 생성 포함)
+        async function moveToStage(bucketId, newStage) {
+            try {
+                showLoading();
+                
+                // Supabase에서 단계 업데이트
+                const { error: bucketError } = await supabase
+                    .from('buckets')
+                    .update({ stage: newStage })
+                    .eq('id', bucketId)
+                    .eq('user_id', userId);
+
+                if (bucketError) {
+                    throw new Error(`단계 변경 오류: ${bucketError.message}`);
+                }
+
+                // 로컬 상태에서 버킷 찾기
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (bucket) {
+                    bucket.stage = newStage;
+                    
+                    // 기존 액션 아이템 유지하고 새 단계의 기본 액션 아이템 추가
+                    const existingActions = bucket.actions || [];
+                    const newDefaultActions = defaultActionItems[newStage] || [];
+                    
+                    // 새로 추가할 액션들 준비
+                    const actionsToAdd = [];
+                    newDefaultActions.forEach(actionText => {
+                        const exists = existingActions.some(action => action.text === actionText);
+                        if (!exists) {
+                            actionsToAdd.push({
+                                bucket_id: bucketId,
+                                text: actionText,
+                                completed: false,
+                                deadline: null,
+                                order_index: existingActions.length + actionsToAdd.length
+                            });
+                        }
+                    });
+                    
+                    // Supabase에 새 액션들 추가
+                    if (actionsToAdd.length > 0) {
+                        const { data: newActions, error: actionsError } = await supabase
+                            .from('actions')
+                            .insert(actionsToAdd)
+                            .select();
+
+                        if (actionsError) {
+                            throw new Error(`액션 아이템 추가 오류: ${actionsError.message}`);
+                        }
+
+                        // 로컬 상태에 새 액션들 추가
+                        bucket.actions = [...existingActions, ...newActions];
+                    }
+                }
+                
+                hideLoading();
+                renderStageView();
+                
+                // 단계 이름 변환
+                const stageNames = {
+                    '대기': '대기',
+                    '진행_광고제작': '광고제작',
+                    '진행_광고운영': '광고운영',
+                    '진행_매출정산': '매출정산'
+                };
+                
+                showSuccess(`${bucket?.name || '광고주'}가 ${stageNames[newStage]} 단계로 이동되었습니다!`);
+            } catch (error) {
+                console.error('단계 변경 오류:', error);
+                hideLoading();
+                alert('오류가 발생했습니다: ' + error.message);
+                // 오류 발생 시 뷰 새로고침
+                renderStageView();
+            }
+        }
+
+        // 기존 updateStageFromSelect 함수도 moveToStage 사용하도록 수정
+        async function updateStageFromSelect(bucketId, newStage) {
+            await moveToStage(bucketId, newStage);
+        }
+
         // 버킷 뷰로 전환하면서 특정 버킷 강조
         function switchToBucketView(bucketId) {
             switchView('buckets');
@@ -1094,54 +1412,6 @@
             `;
             
             event.target.closest('.bg-gray-50').innerHTML += selectHtml;
-        }
-
-        // 드래그로 단계 이동하는 함수
-        async function moveToStage(bucketId, newStage) {
-            try {
-                showLoading();
-                
-                // Supabase에서 단계 업데이트
-                const { error } = await supabase
-                    .from('buckets')
-                    .update({ stage: newStage })
-                    .eq('id', bucketId)
-                    .eq('user_id', userId);
-
-                if (error) {
-                    throw new Error(`단계 변경 오류: ${error.message}`);
-                }
-
-                // 로컬 상태 업데이트
-                const bucket = buckets.find(b => b.id === bucketId);
-                if (bucket) {
-                    bucket.stage = newStage;
-                }
-                
-                hideLoading();
-                renderStageView();
-                
-                // 단계 이름 변환
-                const stageNames = {
-                    '대기': '대기',
-                    '진행_광고제작': '광고제작',
-                    '진행_광고운영': '광고운영',
-                    '진행_매출정산': '매출정산'
-                };
-                
-                showSuccess(`${bucket?.name || '광고주'}가 ${stageNames[newStage]} 단계로 이동되었습니다!`);
-            } catch (error) {
-                console.error('단계 변경 오류:', error);
-                hideLoading();
-                alert('오류가 발생했습니다: ' + error.message);
-                // 오류 발생 시 뷰 새로고침
-                renderStageView();
-            }
-        }
-
-        // 기존 updateStageFromSelect 함수도 moveToStage 사용하도록 수정
-        async function updateStageFromSelect(bucketId, newStage) {
-            await moveToStage(bucketId, newStage);
         }
 
         // 정렬 토글
@@ -1236,7 +1506,7 @@
             contractTermsInput.value = '';
         }
 
-        // 새 버킷 추가 (Supabase에 저장) - 기본 액션아이템 생성 제거
+        // 새 버킷 추가 (Supabase에 저장) - 기본 액션아이템 생성 포함
         async function addBucket() {
             const name = bucketNameInput.value.trim();
             if (!name) {
@@ -1269,8 +1539,27 @@
                     throw new Error(`버킷 생성 오류: ${bucketError.message}`);
                 }
 
-                // 로컬 상태 업데이트 (기본 액션아이템 없이)
-                newBucket.actions = [];
+                // 기본 액션 아이템들 생성
+                const defaultActions = defaultActionItems['대기'].map((action, index) => ({
+                    bucket_id: newBucket.id,
+                    text: action,
+                    completed: false,
+                    deadline: null,
+                    order_index: index
+                }));
+
+                // Supabase에 액션 아이템들 저장
+                const { data: newActions, error: actionsError } = await supabase
+                    .from('actions')
+                    .insert(defaultActions)
+                    .select();
+
+                if (actionsError) {
+                    throw new Error(`액션 아이템 생성 오류: ${actionsError.message}`);
+                }
+
+                // 로컬 상태 업데이트
+                newBucket.actions = newActions;
                 buckets.unshift(newBucket);
                 
                 hideLoading();
@@ -1353,6 +1642,7 @@
             todoList.innerHTML = sortedItems.map(action => {
                 const today = new Date().toISOString().split('T')[0];
                 const isToday = action.deadline === today && !action.completed;
+                const isRecurring = action.recurring_rule_id ? '🔄 ' : '';
                 
                 return `
                     <div class="flex items-center justify-between p-3 rounded-lg border ${action.completed ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200'}">
@@ -1362,7 +1652,7 @@
                             </button>
                             <div class="flex-1">
                                 <p class="text-sm font-medium ${action.completed ? 'line-through text-gray-500' : 'text-gray-800'}">
-                                    ${action.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                                    ${isRecurring}${action.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
                                 </p>
                                 <p class="text-xs ${action.completed ? 'text-gray-400' : 'text-gray-500'}">
                                     [${action.bucketName}] - ${action.bucketStage}
@@ -1433,10 +1723,10 @@
                 </div>
 
                 ${!isCollapsed ? `
-                    <!-- 단계 선택 (자동 액션아이템 생성 제거) -->
+                    <!-- 단계 선택 (자동 액션아이템 생성 포함) -->
                     <div class="mb-3">
                         <label class="block text-xs font-medium text-gray-700 mb-1">단계</label>
-                        <select onchange="changeStageOnly(${bucket.id}, this.value)" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <select onchange="changeStageWithActions(${bucket.id}, this.value)" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                             <option value="대기" ${bucket.stage === '대기' ? 'selected' : ''}>대기</option>
                             <option value="진행_광고제작" ${bucket.stage === '진행_광고제작' ? 'selected' : ''}>진행_광고제작</option>
                             <option value="진행_광고운영" ${bucket.stage === '진행_광고운영' ? 'selected' : ''}>진행_광고운영</option>
@@ -1511,6 +1801,7 @@
                             
                             const today = new Date().toISOString().split('T')[0];
                             const isToday = action.deadline === today && !action.completed;
+                            const isRecurring = action.recurring_rule_id ? '🔄 ' : '';
                             
                             return `
                                 <div class="flex flex-col gap-1">
@@ -1528,7 +1819,7 @@
                                         ` : `
                                             <span class="flex-1 text-xs ${action.completed ? 'line-through text-gray-500' : 'text-gray-700'} cursor-pointer" 
                                                   onclick="startEditAction(${action.id})">
-                                                ${action.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                                                ${isRecurring}${action.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
                                             </span>
                                             <button onclick="deleteActionItem(${bucket.id}, ${action.id})" class="text-red-500 hover:text-red-700 text-xs">
                                                 ❌
@@ -1680,32 +1971,10 @@
             }
         }
 
-        // 단계 변경 (자동 액션아이템 생성 제거)
-        async function changeStageOnly(bucketId, newStage) {
-            try {
-                // Supabase에서 단계만 업데이트
-                const { error } = await supabase
-                    .from('buckets')
-                    .update({ stage: newStage })
-                    .eq('id', bucketId)
-                    .eq('user_id', userId);
-
-                if (error) {
-                    throw new Error(`단계 변경 오류: ${error.message}`);
-                }
-
-                // 로컬 상태에서 단계만 업데이트
-                const bucket = buckets.find(b => b.id === bucketId);
-                if (bucket) {
-                    bucket.stage = newStage;
-                }
-                
-                renderBuckets();
-                showSuccess('단계가 변경되었습니다!');
-            } catch (error) {
-                console.error('단계 변경 오류:', error);
-                alert('오류가 발생했습니다: ' + error.message);
-            }
+        // 단계 변경 (자동 액션아이템 생성 포함) - 버킷 뷰용
+        async function changeStageWithActions(bucketId, newStage) {
+            await moveToStage(bucketId, newStage);
+            renderBuckets(); // 버킷 뷰 재렌더링
         }
 
         async function addCustomAction(bucketId) {
@@ -1955,6 +2224,438 @@
             }
         }
 
+        // 반복 규칙 관련 함수들
+        function showAddRecurringForm() {
+            addRecurringForm.classList.remove('hidden');
+            updateRuleBucketSelect();
+            ruleNameInput.focus();
+            editingRule = null;
+        }
+
+        function hideAddRecurringForm() {
+            addRecurringForm.classList.add('hidden');
+            editingRule = null;
+            ruleNameInput.value = '';
+            ruleBucketSelect.value = '';
+            ruleActionInput.value = '';
+            repeatTypeSelect.value = 'daily';
+            weeklyDaySelect.value = '1';
+            monthlyDateSelect.value = '1';
+            createTimeInput.value = '09:00';
+            deadlineTypeSelect.value = 'none';
+            deadlineDaysInput.value = '1';
+            startDateInput.value = new Date().toISOString().split('T')[0];
+            endDateInput.value = '';
+            ruleStatusSelect.value = 'active';
+            weeklyDayContainer.classList.add('hidden');
+            monthlyDateContainer.classList.add('hidden');
+            deadlineDaysContainer.classList.add('hidden');
+        }
+
+        function updateRuleBucketSelect() {
+            ruleBucketSelect.innerHTML = '<option value="">광고주를 선택하세요</option>';
+            buckets.forEach(bucket => {
+                const option = document.createElement('option');
+                option.value = bucket.id;
+                option.textContent = bucket.name;
+                ruleBucketSelect.appendChild(option);
+            });
+        }
+
+        async function addRecurringRule() {
+            const ruleName = ruleNameInput.value.trim();
+            const bucketId = parseInt(ruleBucketSelect.value);
+            const actionText = ruleActionInput.value.trim();
+            const repeatType = repeatTypeSelect.value;
+            const createTime = createTimeInput.value;
+            const deadlineType = deadlineTypeSelect.value;
+            const deadlineDays = parseInt(deadlineDaysInput.value) || 1;
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value || null;
+            const status = ruleStatusSelect.value;
+
+            if (!ruleName || !bucketId || !actionText || !startDate) {
+                alert('필수 항목을 모두 입력해주세요.');
+                return;
+            }
+
+            try {
+                showLoading();
+
+                // 반복 설정 구성
+                let repeatConfig = { hour: parseInt(createTime.split(':')[0]), minute: parseInt(createTime.split(':')[1]) };
+                
+                if (repeatType === 'weekly') {
+                    repeatConfig.day_of_week = parseInt(weeklyDaySelect.value);
+                } else if (repeatType === 'monthly') {
+                    repeatConfig.date = parseInt(monthlyDateSelect.value);
+                }
+
+                const ruleData = {
+                    user_id: userId,
+                    rule_name: ruleName,
+                    bucket_id: bucketId,
+                    action_template: actionText,
+                    repeat_type: repeatType,
+                    repeat_config: repeatConfig,
+                    deadline_type: deadlineType,
+                    deadline_days: deadlineDays,
+                    start_date: startDate,
+                    end_date: endDate,
+                    is_active: status === 'active',
+                    last_generated: null
+                };
+
+                if (editingRule) {
+                    // 수정
+                    const { error } = await supabase
+                        .from('recurring_rules')
+                        .update(ruleData)
+                        .eq('id', editingRule)
+                        .eq('user_id', userId);
+
+                    if (error) {
+                        throw new Error(`반복 규칙 수정 오류: ${error.message}`);
+                    }
+
+                    // 로컬 상태 업데이트
+                    const ruleIndex = recurringRules.findIndex(r => r.id === editingRule);
+                    if (ruleIndex !== -1) {
+                        recurringRules[ruleIndex] = { ...recurringRules[ruleIndex], ...ruleData };
+                    }
+
+                    showSuccess('반복 규칙이 수정되었습니다!');
+                } else {
+                    // 새 규칙 추가
+                    const { data: newRule, error } = await supabase
+                        .from('recurring_rules')
+                        .insert([ruleData])
+                        .select()
+                        .single();
+
+                    if (error) {
+                        throw new Error(`반복 규칙 생성 오류: ${error.message}`);
+                    }
+
+                    recurringRules.unshift(newRule);
+                    showSuccess('반복 규칙이 생성되었습니다!');
+                }
+
+                hideLoading();
+                hideAddRecurringForm();
+                renderRecurringView();
+
+            } catch (error) {
+                console.error('반복 규칙 처리 오류:', error);
+                hideLoading();
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        function renderRecurringView() {
+            if (recurringRules.length === 0) {
+                recurringRulesList.innerHTML = '';
+                recurringEmpty.classList.remove('hidden');
+                return;
+            }
+
+            recurringEmpty.classList.add('hidden');
+            
+            recurringRulesList.innerHTML = recurringRules.map(rule => {
+                const bucket = buckets.find(b => b.id === rule.bucket_id);
+                const bucketName = bucket ? bucket.name : '삭제된 광고주';
+                
+                const getRepeatText = () => {
+                    const config = rule.repeat_config || {};
+                    const time = `${config.hour || 9}:${String(config.minute || 0).padStart(2, '0')}`;
+                    
+                    if (rule.repeat_type === 'daily') {
+                        return `매일 ${time}`;
+                    } else if (rule.repeat_type === 'weekly') {
+                        const days = ['일', '월', '화', '수', '목', '금', '토'];
+                        const dayName = days[config.day_of_week || 1];
+                        return `매주 ${dayName}요일 ${time}`;
+                    } else if (rule.repeat_type === 'monthly') {
+                        return `매월 ${config.date || 1}일 ${time}`;
+                    }
+                    return '설정 오류';
+                };
+
+                const getDeadlineText = () => {
+                    switch(rule.deadline_type) {
+                        case 'same_day': return '당일 마감';
+                        case 'next_day': return '다음날 마감';
+                        case 'days_after': return `${rule.deadline_days}일 후 마감`;
+                        default: return '마감일 없음';
+                    }
+                };
+
+                return `
+                    <div class="p-4 border border-gray-200 rounded-lg ${rule.is_active ? 'bg-white' : 'bg-gray-50'}">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 flex items-center gap-2">
+                                    🔄 ${rule.rule_name}
+                                    <span class="px-2 py-1 text-xs rounded ${rule.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}">
+                                        ${rule.is_active ? '활성' : '비활성'}
+                                    </span>
+                                </h4>
+                                <p class="text-sm text-gray-600 mt-1">[${bucketName}] ${rule.action_template}</p>
+                                <div class="text-xs text-blue-600 mt-1">
+                                    <span>${getRepeatText()}</span> · <span>${getDeadlineText()}</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="editRecurringRule(${rule.id})" class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+                                    수정
+                                </button>
+                                <button onclick="toggleRecurringRule(${rule.id})" class="px-2 py-1 text-xs rounded ${rule.is_active ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}">
+                                    ${rule.is_active ? '일시정지' : '활성화'}
+                                </button>
+                                <button onclick="deleteRecurringRule(${rule.id})" class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">
+                                    삭제
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <p>기간: ${rule.start_date} ${rule.end_date ? `~ ${rule.end_date}` : '~ 무제한'}</p>
+                            <p>마지막 생성: ${rule.last_generated || '아직 생성된 항목 없음'}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function editRecurringRule(ruleId) {
+            const rule = recurringRules.find(r => r.id === ruleId);
+            if (!rule) return;
+
+            editingRule = ruleId;
+            
+            // 폼 표시
+            addRecurringForm.classList.remove('hidden');
+            updateRuleBucketSelect();
+            
+            // 기존 데이터로 폼 채우기
+            ruleNameInput.value = rule.rule_name;
+            ruleBucketSelect.value = rule.bucket_id;
+            ruleActionInput.value = rule.action_template;
+            repeatTypeSelect.value = rule.repeat_type;
+            
+            const config = rule.repeat_config || {};
+            const time = `${String(config.hour || 9).padStart(2, '0')}:${String(config.minute || 0).padStart(2, '0')}`;
+            createTimeInput.value = time;
+            
+            deadlineTypeSelect.value = rule.deadline_type || 'none';
+            deadlineDaysInput.value = rule.deadline_days || 1;
+            startDateInput.value = rule.start_date;
+            endDateInput.value = rule.end_date || '';
+            ruleStatusSelect.value = rule.is_active ? 'active' : 'inactive';
+            
+            // 반복 타입에 따른 추가 설정
+            weeklyDayContainer.classList.add('hidden');
+            monthlyDateContainer.classList.add('hidden');
+            
+            if (rule.repeat_type === 'weekly') {
+                weeklyDayContainer.classList.remove('hidden');
+                weeklyDaySelect.value = config.day_of_week || 1;
+            } else if (rule.repeat_type === 'monthly') {
+                monthlyDateContainer.classList.remove('hidden');
+                monthlyDateSelect.value = config.date || 1;
+            }
+            
+            // 마감일 타입에 따른 설정
+            if (rule.deadline_type === 'days_after') {
+                deadlineDaysContainer.classList.remove('hidden');
+            }
+            
+            ruleNameInput.focus();
+        }
+
+        async function toggleRecurringRule(ruleId) {
+            try {
+                const rule = recurringRules.find(r => r.id === ruleId);
+                if (!rule) return;
+
+                const newStatus = !rule.is_active;
+
+                const { error } = await supabase
+                    .from('recurring_rules')
+                    .update({ is_active: newStatus })
+                    .eq('id', ruleId)
+                    .eq('user_id', userId);
+
+                if (error) {
+                    throw new Error(`반복 규칙 상태 변경 오류: ${error.message}`);
+                }
+
+                rule.is_active = newStatus;
+                renderRecurringView();
+                
+                showSuccess(`반복 규칙이 ${newStatus ? '활성화' : '일시정지'}되었습니다!`);
+            } catch (error) {
+                console.error('반복 규칙 상태 변경 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        async function deleteRecurringRule(ruleId) {
+            if (!confirm('이 반복 규칙을 삭제하시겠습니까?')) return;
+
+            try {
+                const { error } = await supabase
+                    .from('recurring_rules')
+                    .delete()
+                    .eq('id', ruleId)
+                    .eq('user_id', userId);
+
+                if (error) {
+                    throw new Error(`반복 규칙 삭제 오류: ${error.message}`);
+                }
+
+                recurringRules = recurringRules.filter(r => r.id !== ruleId);
+                renderRecurringView();
+                
+                showSuccess('반복 규칙이 삭제되었습니다!');
+            } catch (error) {
+                console.error('반복 규칙 삭제 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 반복 규칙 체크 및 실행
+        function startRecurringCheck() {
+            // 1분마다 반복 규칙 체크
+            setInterval(checkRecurringRules, 60000);
+            // 즉시 한 번 체크
+            checkRecurringRules();
+        }
+
+        async function checkRecurringRules() {
+            const now = new Date();
+            const currentDate = now.toISOString().split('T')[0];
+            const currentTime = now.getHours() * 60 + now.getMinutes(); // 분 단위
+
+            for (const rule of recurringRules) {
+                if (!rule.is_active) continue;
+                
+                // 종료일 체크
+                if (rule.end_date && currentDate > rule.end_date) continue;
+                
+                // 시작일 체크
+                if (currentDate < rule.start_date) continue;
+                
+                // 오늘 이미 생성되었는지 체크
+                if (rule.last_generated === currentDate) continue;
+                
+                // 시간 체크
+                const config = rule.repeat_config || {};
+                const ruleTime = (config.hour || 9) * 60 + (config.minute || 0);
+                const timeDiff = Math.abs(currentTime - ruleTime);
+                
+                // 1분 오차 허용
+                if (timeDiff > 1) continue;
+                
+                // 반복 타입별 조건 체크
+                let shouldGenerate = false;
+                
+                if (rule.repeat_type === 'daily') {
+                    shouldGenerate = true;
+                } else if (rule.repeat_type === 'weekly') {
+                    const targetDay = config.day_of_week || 1;
+                    const currentDay = now.getDay();
+                    shouldGenerate = targetDay === currentDay;
+                } else if (rule.repeat_type === 'monthly') {
+                    const targetDate = config.date || 1;
+                    const currentDateNum = now.getDate();
+                    shouldGenerate = targetDate === currentDateNum;
+                }
+                
+                if (shouldGenerate) {
+                    await generateRecurringAction(rule, currentDate);
+                }
+            }
+        }
+
+        async function generateRecurringAction(rule, currentDate) {
+            try {
+                const bucket = buckets.find(b => b.id === rule.bucket_id);
+                if (!bucket) return;
+
+                // 마감일 계산
+                let deadline = null;
+                const currentDateObj = new Date(currentDate);
+                
+                switch(rule.deadline_type) {
+                    case 'same_day':
+                        deadline = currentDate;
+                        break;
+                    case 'next_day':
+                        currentDateObj.setDate(currentDateObj.getDate() + 1);
+                        deadline = currentDateObj.toISOString().split('T')[0];
+                        break;
+                    case 'days_after':
+                        currentDateObj.setDate(currentDateObj.getDate() + (rule.deadline_days || 1));
+                        deadline = currentDateObj.toISOString().split('T')[0];
+                        break;
+                    default:
+                        deadline = null;
+                }
+
+                // 새 액션 아이템 생성
+                const newAction = {
+                    bucket_id: rule.bucket_id,
+                    text: `${rule.action_template} (${currentDate})`,
+                    completed: false,
+                    deadline: deadline,
+                    recurring_rule_id: rule.id,
+                    order_index: bucket.actions.length
+                };
+
+                // Supabase에 저장
+                const { data: createdAction, error: actionError } = await supabase
+                    .from('actions')
+                    .insert([newAction])
+                    .select()
+                    .single();
+
+                if (actionError) {
+                    throw new Error(`반복 액션 생성 오류: ${actionError.message}`);
+                }
+
+                // 마지막 생성일 업데이트
+                const { error: ruleError } = await supabase
+                    .from('recurring_rules')
+                    .update({ last_generated: currentDate })
+                    .eq('id', rule.id);
+
+                if (ruleError) {
+                    console.error('반복 규칙 업데이트 오류:', ruleError);
+                }
+
+                // 로컬 상태 업데이트
+                bucket.actions.push(createdAction);
+                rule.last_generated = currentDate;
+
+                // 현재 뷰 업데이트
+                if (currentView === 'buckets') {
+                    renderBuckets();
+                } else if (currentView === 'stage') {
+                    renderStageView();
+                } else if (currentView === 'todo') {
+                    renderTodoView();
+                }
+
+                updateTodayDeadlines();
+                
+                console.log(`반복 액션 생성됨: ${rule.rule_name} -> [${bucket.name}]`);
+                showSuccess(`반복 작업이 생성되었습니다: ${rule.rule_name}`);
+
+            } catch (error) {
+                console.error('반복 액션 생성 오류:', error);
+            }
+        }
+
         // 엑셀 다운로드 기능
         function exportToExcel() {
             try {
@@ -1966,7 +2667,8 @@
                             '광고주명': bucket.name,
                             '액션아이템': action.text,
                             '마감일자': action.deadline || '',
-                            '완료여부': action.completed ? '완료' : '미완료'
+                            '완료여부': action.completed ? '완료' : '미완료',
+                            '반복작업': action.recurring_rule_id ? '반복' : '일반'
                         });
                     });
                 });
@@ -1992,7 +2694,8 @@
                     { wch: 20 }, // 광고주명
                     { wch: 30 }, // 액션아이템
                     { wch: 12 }, // 마감일자
-                    { wch: 10 }  // 완료여부
+                    { wch: 10 }, // 완료여부
+                    { wch: 10 }  // 반복작업
                 ];
                 ws['!cols'] = colWidths;
 
