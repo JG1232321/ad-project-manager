@@ -9,11 +9,78 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
+    <!-- 로그인 모달 -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold text-center mb-6">🔐 업무관리앱 로그인</h2>
+            
+            <!-- 로그인 폼 -->
+            <div id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">사용자 ID</label>
+                    <input type="text" id="loginUserId" placeholder="사용자 ID를 입력하세요" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
+                    <input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="handleLogin()" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                        로그인
+                    </button>
+                    <button onclick="showSignupForm()" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
+                        회원가입
+                    </button>
+                </div>
+            </div>
+
+            <!-- 회원가입 폼 -->
+            <div id="signupForm" class="hidden">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">사용자 ID</label>
+                    <input type="text" id="signupUserId" placeholder="사용할 ID를 입력하세요" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
+                    <input type="password" id="signupPassword" placeholder="비밀번호를 입력하세요" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">이름</label>
+                    <input type="text" id="signupName" placeholder="이름을 입력하세요" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="handleSignup()" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                        회원가입
+                    </button>
+                    <button onclick="showLoginForm()" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
+                        로그인으로
+                    </button>
+                </div>
+            </div>
+
+            <div id="authStatus" class="mt-4 text-sm text-center text-gray-600"></div>
+        </div>
+    </div>
+
     <div id="app" class="max-w-7xl mx-auto p-6">
         <!-- 헤더 -->
-        <div class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-3">📊 광고 프로젝트 관리</h1>
-            <p class="text-gray-600 text-lg">광고주별 버킷으로 업무를 체계적으로 관리하세요</p>
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-800 mb-3">📊 광고 프로젝트 관리</h1>
+                <p class="text-gray-600 text-lg">광고주별 버킷으로 업무를 체계적으로 관리하세요</p>
+            </div>
+            <div id="userInfo" class="text-right hidden">
+                <p class="text-sm text-gray-600">환영합니다!</p>
+                <p class="font-semibold text-gray-800" id="userName"></p>
+                <button onclick="logout()" class="mt-1 px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">
+                    로그아웃
+                </button>
+            </div>
         </div>
 
         <!-- 로딩 상태 -->
@@ -38,6 +105,9 @@
             <div class="flex border-b border-gray-200">
                 <button id="bucketsViewBtn" class="px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600">
                     버킷 뷰
+                </button>
+                <button id="stageViewBtn" class="px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                    단계별 뷰
                 </button>
                 <button id="todoViewBtn" class="px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                     투두리스트
@@ -113,6 +183,55 @@
                 <div class="text-6xl mb-4">📋</div>
                 <p class="text-gray-500 text-xl mb-2">아직 등록된 광고주가 없습니다.</p>
                 <p class="text-gray-400">새 광고주를 추가해서 업무 관리를 시작하세요.</p>
+            </div>
+        </div>
+
+        <!-- 단계별 뷰 -->
+        <div id="stageView" class="hidden">
+            <div class="grid gap-6 lg:grid-cols-4">
+                <!-- 대기 단계 -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="bg-gray-100 px-4 py-3 rounded-t-lg border-b">
+                        <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                            ⏳ 대기
+                            <span id="waitingCount" class="bg-gray-500 text-white text-xs px-2 py-1 rounded-full">0</span>
+                        </h3>
+                    </div>
+                    <div id="waitingStage" class="p-4 space-y-3 min-h-[400px]"></div>
+                </div>
+
+                <!-- 광고제작 단계 -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="bg-blue-100 px-4 py-3 rounded-t-lg border-b">
+                        <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                            🎨 광고제작
+                            <span id="creativeCount" class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">0</span>
+                        </h3>
+                    </div>
+                    <div id="creativeStage" class="p-4 space-y-3 min-h-[400px]"></div>
+                </div>
+
+                <!-- 광고운영 단계 -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="bg-green-100 px-4 py-3 rounded-t-lg border-b">
+                        <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                            📈 광고운영
+                            <span id="operationCount" class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">0</span>
+                        </h3>
+                    </div>
+                    <div id="operationStage" class="p-4 space-y-3 min-h-[400px]"></div>
+                </div>
+
+                <!-- 매출정산 단계 -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="bg-purple-100 px-4 py-3 rounded-t-lg border-b">
+                        <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                            💰 매출정산
+                            <span id="settlementCount" class="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">0</span>
+                        </h3>
+                    </div>
+                    <div id="settlementStage" class="p-4 space-y-3 min-h-[400px]"></div>
+                </div>
             </div>
         </div>
 
@@ -205,6 +324,7 @@
         let supabase;
         let buckets = [];
         let userId;
+        let currentUser = null;
         let currentView = 'buckets';
         let sortOrder = 'asc';
         let collapsedBuckets = {};
@@ -214,24 +334,24 @@
         let showCompletedTodos = true;
         let showCompletedInBuckets = true;
 
-        // 기본 액션 아이템
-        const defaultActionItems = {
-            '대기': ['광고주 요구사항 수집', '예산 및 일정 확정', '계약서 검토'],
-            '진행_광고제작': ['크리에이티브 컨셉 기획', '디자인 시안 제작', '광고주 피드백 반영', '최종 소재 승인'],
-            '진행_광고운영': ['광고 계정 세팅', '캠페인 런칭', '일일 성과 모니터링', '최적화 작업'],
-            '진행_매출정산': ['최종 성과 리포트 작성', '매출 정산', '광고주 결과 보고']
-        };
-
         // DOM 요소들
-        let bucketsViewBtn, todoViewBtn, memoViewBtn, addBucketSection, addBucketBtn, addBucketForm;
+        let bucketsViewBtn, stageViewBtn, todoViewBtn, memoViewBtn, addBucketSection, addBucketBtn, addBucketForm;
         let bucketNameInput, unitPriceInput, quantityInput, productInput, contractTermsInput;
         let confirmAddBtn, cancelAddBtn, sortBtn, sortText, loadingIndicator;
-        let todayDeadlines, todayDeadlinesList, todoView, memoView, bucketsView;
+        let todayDeadlines, todayDeadlinesList, todoView, memoView, bucketsView, stageView;
         let todoList, todoEmpty, todoSortBtn, todoSortText;
         let toggleCompletedBtn, toggleCompletedText, bucketsContainer, emptyState;
         let exportExcelBtn, toggleBucketCompletedBtn, toggleBucketCompletedText;
         let addTodoBtn, addTodoForm, todoBucketSelect, todoDeadlineInput, todoTextInput;
         let confirmAddTodoBtn, cancelAddTodoBtn, memoTextarea, saveMemoBtn, clearMemoBtn, memoStatus;
+        
+        // 인증 관련 DOM 요소들
+        let loginModal, loginUserId, loginPassword, signupUserId, signupPassword, signupName;
+        let loginForm, signupForm, authStatus, userInfo, userName;
+        
+        // 단계별 뷰 DOM 요소들
+        let waitingStage, creativeStage, operationStage, settlementStage;
+        let waitingCount, creativeCount, operationCount, settlementCount;
 
         // 앱 초기화
         async function initApp() {
@@ -241,21 +361,17 @@
                 // Supabase 클라이언트 초기화
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 
-                // 사용자 ID 설정 (세션 기반)
-                userId = sessionStorage.getItem('userId') || 'user_' + Math.random().toString(36).substr(2, 9);
-                sessionStorage.setItem('userId', userId);
-                
                 // DOM 요소 초기화
                 initializeElements();
+                initializeAuthElements();
+                initializeStageElements();
                 
                 // 이벤트 리스너 설정
                 setupEventListeners();
+                setupAuthEventListeners();
                 
-                // 데이터 로드
-                await loadData();
-                
-                // 오늘 마감 업데이트
-                updateTodayDeadlines();
+                // 로그인 상태 확인
+                await checkAuthStatus();
                 
                 console.log('앱 초기화 완료');
             } catch (error) {
@@ -267,6 +383,7 @@
         // DOM 요소 초기화
         function initializeElements() {
             bucketsViewBtn = document.getElementById('bucketsViewBtn');
+            stageViewBtn = document.getElementById('stageViewBtn');
             todoViewBtn = document.getElementById('todoViewBtn');
             memoViewBtn = document.getElementById('memoViewBtn');
             addBucketSection = document.getElementById('addBucketSection');
@@ -287,6 +404,7 @@
             todoView = document.getElementById('todoView');
             memoView = document.getElementById('memoView');
             bucketsView = document.getElementById('bucketsView');
+            stageView = document.getElementById('stageView');
             todoList = document.getElementById('todoList');
             todoEmpty = document.getElementById('todoEmpty');
             todoSortBtn = document.getElementById('todoSortBtn');
@@ -311,9 +429,37 @@
             memoStatus = document.getElementById('memoStatus');
         }
 
+        // 인증 관련 DOM 요소 초기화
+        function initializeAuthElements() {
+            loginModal = document.getElementById('loginModal');
+            loginUserId = document.getElementById('loginUserId');
+            loginPassword = document.getElementById('loginPassword');
+            signupUserId = document.getElementById('signupUserId');
+            signupPassword = document.getElementById('signupPassword');
+            signupName = document.getElementById('signupName');
+            loginForm = document.getElementById('loginForm');
+            signupForm = document.getElementById('signupForm');
+            authStatus = document.getElementById('authStatus');
+            userInfo = document.getElementById('userInfo');
+            userName = document.getElementById('userName');
+        }
+
+        // 단계별 뷰 DOM 요소 초기화
+        function initializeStageElements() {
+            waitingStage = document.getElementById('waitingStage');
+            creativeStage = document.getElementById('creativeStage');
+            operationStage = document.getElementById('operationStage');
+            settlementStage = document.getElementById('settlementStage');
+            waitingCount = document.getElementById('waitingCount');
+            creativeCount = document.getElementById('creativeCount');
+            operationCount = document.getElementById('operationCount');
+            settlementCount = document.getElementById('settlementCount');
+        }
+
         // 이벤트 리스너 등록
         function setupEventListeners() {
             bucketsViewBtn.addEventListener('click', () => switchView('buckets'));
+            stageViewBtn.addEventListener('click', () => switchView('stage'));
             todoViewBtn.addEventListener('click', () => switchView('todo'));
             memoViewBtn.addEventListener('click', () => switchView('memo'));
             addBucketBtn.addEventListener('click', showAddForm);
@@ -346,6 +492,255 @@
 
             // 메모 자동저장
             memoTextarea.addEventListener('input', autoSaveMemo);
+        }
+
+        // 인증 이벤트 리스너
+        function setupAuthEventListeners() {
+            // Enter 키 처리
+            loginUserId.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loginPassword.focus();
+            });
+            
+            loginPassword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleLogin();
+            });
+            
+            signupUserId.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') signupPassword.focus();
+            });
+            
+            signupPassword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') signupName.focus();
+            });
+            
+            signupName.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSignup();
+            });
+        }
+
+        // 로그인 상태 확인
+        async function checkAuthStatus() {
+            const savedAuth = localStorage.getItem('userAuth');
+            if (savedAuth) {
+                try {
+                    const authData = JSON.parse(savedAuth);
+                    
+                    // 저장된 인증 정보 검증
+                    const { data: userData, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('user_id', authData.userId)
+                        .eq('password_hash', authData.passwordHash)
+                        .single();
+
+                    if (!error && userData) {
+                        currentUser = userData;
+                        userId = userData.user_id;
+                        userName.textContent = userData.name;
+                        userInfo.classList.remove('hidden');
+                        hideLoginModal();
+                        await loadData();
+                        updateTodayDeadlines();
+                        return;
+                    }
+                } catch (error) {
+                    console.log('저장된 인증 정보가 유효하지 않습니다.');
+                }
+            }
+            
+            // 로그인이 필요한 경우
+            showLoginModal();
+        }
+
+        // 로그인 모달 표시/숨김
+        function showLoginModal() {
+            loginModal.classList.remove('hidden');
+            loginUserId.focus();
+        }
+
+        function hideLoginModal() {
+            loginModal.classList.add('hidden');
+        }
+
+        // 폼 전환
+        function showSignupForm() {
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+            signupUserId.focus();
+        }
+
+        function showLoginForm() {
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            loginUserId.focus();
+        }
+
+        // 간단한 해시 함수
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return hash.toString();
+        }
+
+        // 로그인 처리
+        async function handleLogin() {
+            const userIdValue = loginUserId.value.trim();
+            const passwordValue = loginPassword.value.trim();
+            
+            if (!userIdValue || !passwordValue) {
+                authStatus.textContent = '사용자 ID와 비밀번호를 모두 입력해주세요.';
+                authStatus.className = 'mt-4 text-sm text-center text-red-600';
+                return;
+            }
+            
+            try {
+                authStatus.textContent = '로그인 중...';
+                authStatus.className = 'mt-4 text-sm text-center text-blue-600';
+                
+                const passwordHash = simpleHash(passwordValue);
+                
+                // 사용자 인증
+                const { data: userData, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('user_id', userIdValue)
+                    .eq('password_hash', passwordHash)
+                    .single();
+
+                if (error || !userData) {
+                    authStatus.textContent = '사용자 ID 또는 비밀번호가 올바르지 않습니다.';
+                    authStatus.className = 'mt-4 text-sm text-center text-red-600';
+                    return;
+                }
+                
+                // 로그인 성공
+                currentUser = userData;
+                userId = userData.user_id;
+                userName.textContent = userData.name;
+                userInfo.classList.remove('hidden');
+                
+                // 인증 정보 저장
+                localStorage.setItem('userAuth', JSON.stringify({
+                    userId: userData.user_id,
+                    passwordHash: passwordHash,
+                    name: userData.name
+                }));
+                
+                authStatus.textContent = `환영합니다, ${userData.name}님!`;
+                authStatus.className = 'mt-4 text-sm text-center text-green-600';
+                
+                setTimeout(async () => {
+                    hideLoginModal();
+                    await loadData();
+                    updateTodayDeadlines();
+                    showSuccess(`${userData.name}님, 로그인되었습니다!`);
+                }, 1000);
+                
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                authStatus.textContent = '로그인 중 오류가 발생했습니다.';
+                authStatus.className = 'mt-4 text-sm text-center text-red-600';
+            }
+        }
+
+        // 회원가입 처리
+        async function handleSignup() {
+            const userIdValue = signupUserId.value.trim();
+            const passwordValue = signupPassword.value.trim();
+            const nameValue = signupName.value.trim();
+            
+            if (!userIdValue || !passwordValue || !nameValue) {
+                authStatus.textContent = '모든 필드를 입력해주세요.';
+                authStatus.className = 'mt-4 text-sm text-center text-red-600';
+                return;
+            }
+            
+            if (userIdValue.length < 3) {
+                authStatus.textContent = '사용자 ID는 3자 이상이어야 합니다.';
+                authStatus.className = 'mt-4 text-sm text-center text-red-600';
+                return;
+            }
+            
+            if (passwordValue.length < 4) {
+                authStatus.textContent = '비밀번호는 4자 이상이어야 합니다.';
+                authStatus.className = 'mt-4 text-sm text-center text-red-600';
+                return;
+            }
+            
+            try {
+                authStatus.textContent = '회원가입 중...';
+                authStatus.className = 'mt-4 text-sm text-center text-blue-600';
+                
+                // 사용자 ID 중복 확인
+                const { data: existingUser } = await supabase
+                    .from('users')
+                    .select('user_id')
+                    .eq('user_id', userIdValue)
+                    .single();
+
+                if (existingUser) {
+                    authStatus.textContent = '이미 사용 중인 사용자 ID입니다.';
+                    authStatus.className = 'mt-4 text-sm text-center text-red-600';
+                    return;
+                }
+                
+                const passwordHash = simpleHash(passwordValue);
+                
+                // 새 사용자 등록
+                const { data: newUser, error } = await supabase
+                    .from('users')
+                    .insert([{
+                        user_id: userIdValue,
+                        password_hash: passwordHash,
+                        name: nameValue,
+                        created_at: new Date().toISOString()
+                    }])
+                    .select()
+                    .single();
+
+                if (error) {
+                    throw error;
+                }
+                
+                authStatus.textContent = '회원가입이 완료되었습니다! 로그인해주세요.';
+                authStatus.className = 'mt-4 text-sm text-center text-green-600';
+                
+                // 폼 초기화 후 로그인 폼으로 전환
+                setTimeout(() => {
+                    signupUserId.value = '';
+                    signupPassword.value = '';
+                    signupName.value = '';
+                    loginUserId.value = userIdValue;
+                    showLoginForm();
+                    authStatus.textContent = '';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('회원가입 오류:', error);
+                authStatus.textContent = '회원가입 중 오류가 발생했습니다.';
+                authStatus.className = 'mt-4 text-sm text-center text-red-600';
+            }
+        }
+
+        // 로그아웃
+        function logout() {
+            if (confirm('정말 로그아웃하시겠습니까?')) {
+                localStorage.removeItem('userAuth');
+                currentUser = null;
+                userId = null;
+                buckets = [];
+                userInfo.classList.add('hidden');
+                showLoginModal();
+                
+                // 폼 초기화
+                loginUserId.value = '';
+                loginPassword.value = '';
+                authStatus.textContent = '';
+            }
         }
 
         // 로딩 표시/숨김
@@ -421,6 +816,8 @@
                 // 뷰 렌더링
                 if (currentView === 'buckets') {
                     renderBuckets();
+                } else if (currentView === 'stage') {
+                    renderStageView();
                 } else if (currentView === 'todo') {
                     renderTodoView();
                 }
@@ -441,6 +838,7 @@
             
             // 모든 탭 버튼 초기화
             bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+            stageViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             todoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             memoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             
@@ -449,12 +847,17 @@
             todoView.classList.add('hidden');
             memoView.classList.add('hidden');
             bucketsView.classList.add('hidden');
+            stageView.classList.add('hidden');
             
             if (view === 'buckets') {
                 bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
                 addBucketSection.classList.remove('hidden');
                 bucketsView.classList.remove('hidden');
                 renderBuckets();
+            } else if (view === 'stage') {
+                stageViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
+                stageView.classList.remove('hidden');
+                renderStageView();
             } else if (view === 'todo') {
                 todoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
                 todoView.classList.remove('hidden');
@@ -464,6 +867,140 @@
                 memoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
                 memoView.classList.remove('hidden');
                 loadMemo();
+            }
+        }
+
+        // 단계별 뷰 렌더링
+        function renderStageView() {
+            // 단계별로 버킷 분류
+            const stageMap = {
+                '대기': [],
+                '진행_광고제작': [],
+                '진행_광고운영': [],
+                '진행_매출정산': []
+            };
+
+            buckets.forEach(bucket => {
+                const stage = bucket.stage || '대기';
+                if (stageMap[stage]) {
+                    stageMap[stage].push(bucket);
+                }
+            });
+
+            // 각 단계별로 렌더링
+            renderStageColumn('대기', stageMap['대기'], waitingStage, waitingCount);
+            renderStageColumn('진행_광고제작', stageMap['진행_광고제작'], creativeStage, creativeCount);
+            renderStageColumn('진행_광고운영', stageMap['진행_광고운영'], operationStage, operationCount);
+            renderStageColumn('진행_매출정산', stageMap['진행_매출정산'], settlementStage, settlementCount);
+        }
+
+        // 단계별 컬럼 렌더링
+        function renderStageColumn(stage, stageBuckets, container, countElement) {
+            countElement.textContent = stageBuckets.length;
+            
+            if (stageBuckets.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm text-center py-8">해당 단계의 광고주가 없습니다.</p>';
+                return;
+            }
+
+            container.innerHTML = stageBuckets.map(bucket => {
+                const incompleteActions = (bucket.actions || []).filter(action => !action.completed).length;
+                const totalActions = (bucket.actions || []).length;
+                
+                return `
+                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer"
+                         onclick="switchToBucketView(${bucket.id})">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-medium text-gray-800 text-sm">${bucket.name}</h4>
+                            <button onclick="event.stopPropagation(); changeStageInStageView(${bucket.id}, event)" 
+                                    class="text-gray-400 hover:text-gray-600 text-xs">
+                                📝
+                            </button>
+                        </div>
+                        
+                        ${bucket.unit_price || bucket.quantity || bucket.product ? `
+                            <div class="text-xs text-gray-500 mb-2">
+                                ${bucket.unit_price ? `${bucket.unit_price}원` : ''}
+                                ${(bucket.unit_price && bucket.quantity) ? ' | ' : ''}
+                                ${bucket.quantity ? `${bucket.quantity}` : ''}
+                                ${((bucket.unit_price || bucket.quantity) && bucket.product) ? ' | ' : ''}
+                                ${bucket.product ? `${bucket.product}` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-600">
+                                액션: ${totalActions - incompleteActions}/${totalActions}
+                            </span>
+                            <div class="w-16 bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-500 h-2 rounded-full" 
+                                     style="width: ${totalActions > 0 ? ((totalActions - incompleteActions) / totalActions * 100) : 0}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 버킷 뷰로 전환하면서 특정 버킷 강조
+        function switchToBucketView(bucketId) {
+            switchView('buckets');
+            // 버킷 강조 효과는 선택사항
+        }
+
+        // 단계별 뷰에서 단계 변경
+        function changeStageInStageView(bucketId, event) {
+            event.stopPropagation();
+            
+            const stages = [
+                { value: '대기', text: '⏳ 대기' },
+                { value: '진행_광고제작', text: '🎨 광고제작' },
+                { value: '진행_광고운영', text: '📈 광고운영' },
+                { value: '진행_매출정산', text: '💰 매출정산' }
+            ];
+            
+            const currentBucket = buckets.find(b => b.id === bucketId);
+            const currentStage = currentBucket?.stage || '대기';
+            
+            const stageOptions = stages.map(stage => 
+                `<option value="${stage.value}" ${stage.value === currentStage ? 'selected' : ''}>${stage.text}</option>`
+            ).join('');
+            
+            const selectHtml = `
+                <select onchange="updateStageFromSelect(${bucketId}, this.value)" 
+                        class="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    ${stageOptions}
+                </select>
+            `;
+            
+            event.target.closest('.bg-gray-50').innerHTML += selectHtml;
+        }
+
+        // 셀렉트에서 단계 업데이트
+        async function updateStageFromSelect(bucketId, newStage) {
+            try {
+                // Supabase에서 단계 업데이트
+                const { error } = await supabase
+                    .from('buckets')
+                    .update({ stage: newStage })
+                    .eq('id', bucketId)
+                    .eq('user_id', userId);
+
+                if (error) {
+                    throw new Error(`단계 변경 오류: ${error.message}`);
+                }
+
+                // 로컬 상태 업데이트
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (bucket) {
+                    bucket.stage = newStage;
+                }
+                
+                renderStageView();
+                showSuccess('단계가 변경되었습니다!');
+            } catch (error) {
+                console.error('단계 변경 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
@@ -559,7 +1096,7 @@
             contractTermsInput.value = '';
         }
 
-        // 새 버킷 추가 (Supabase에 저장)
+        // 새 버킷 추가 (Supabase에 저장) - 기본 액션아이템 생성 제거
         async function addBucket() {
             const name = bucketNameInput.value.trim();
             if (!name) {
@@ -592,32 +1129,19 @@
                     throw new Error(`버킷 생성 오류: ${bucketError.message}`);
                 }
 
-                // 기본 액션 아이템들 생성
-                const defaultActions = defaultActionItems['대기'].map((action, index) => ({
-                    bucket_id: newBucket.id,
-                    text: action,
-                    completed: false,
-                    deadline: null,
-                    order_index: index
-                }));
-
-                // Supabase에 액션 아이템들 저장
-                const { data: newActions, error: actionsError } = await supabase
-                    .from('actions')
-                    .insert(defaultActions)
-                    .select();
-
-                if (actionsError) {
-                    throw new Error(`액션 아이템 생성 오류: ${actionsError.message}`);
-                }
-
-                // 로컬 상태 업데이트
-                newBucket.actions = newActions;
+                // 로컬 상태 업데이트 (기본 액션아이템 없이)
+                newBucket.actions = [];
                 buckets.unshift(newBucket);
                 
                 hideLoading();
                 hideAddForm();
-                renderBuckets();
+                
+                if (currentView === 'buckets') {
+                    renderBuckets();
+                } else if (currentView === 'stage') {
+                    renderStageView();
+                }
+                
                 updateTodayDeadlines();
                 showSuccess('새 광고주가 추가되었습니다!');
                 
@@ -769,10 +1293,10 @@
                 </div>
 
                 ${!isCollapsed ? `
-                    <!-- 단계 선택 -->
+                    <!-- 단계 선택 (자동 액션아이템 생성 제거) -->
                     <div class="mb-3">
                         <label class="block text-xs font-medium text-gray-700 mb-1">단계</label>
-                        <select onchange="changeStage(${bucket.id}, this.value)" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <select onchange="changeStageOnly(${bucket.id}, this.value)" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                             <option value="대기" ${bucket.stage === '대기' ? 'selected' : ''}>대기</option>
                             <option value="진행_광고제작" ${bucket.stage === '진행_광고제작' ? 'selected' : ''}>진행_광고제작</option>
                             <option value="진행_광고운영" ${bucket.stage === '진행_광고운영' ? 'selected' : ''}>진행_광고운영</option>
@@ -838,7 +1362,9 @@
                             </button>
                         </div>
                         
-                        ${sortedActions.map(action => {
+                        ${sortedActions.length === 0 ? `
+                            <p class="text-gray-400 text-xs text-center py-4">액션아이템이 없습니다.<br>➕ 버튼을 눌러 추가해보세요.</p>
+                        ` : sortedActions.map(action => {
                             if (!showCompletedInBuckets && action.completed) {
                                 return '';
                             }
@@ -1014,57 +1540,24 @@
             }
         }
 
-        async function changeStage(bucketId, newStage) {
+        // 단계 변경 (자동 액션아이템 생성 제거)
+        async function changeStageOnly(bucketId, newStage) {
             try {
-                // Supabase에서 버킷 단계 업데이트
-                const { error: bucketError } = await supabase
+                // Supabase에서 단계만 업데이트
+                const { error } = await supabase
                     .from('buckets')
                     .update({ stage: newStage })
                     .eq('id', bucketId)
                     .eq('user_id', userId);
 
-                if (bucketError) {
-                    throw new Error(`단계 변경 오류: ${bucketError.message}`);
+                if (error) {
+                    throw new Error(`단계 변경 오류: ${error.message}`);
                 }
 
-                // 로컬 상태에서 버킷 찾기
+                // 로컬 상태에서 단계만 업데이트
                 const bucket = buckets.find(b => b.id === bucketId);
                 if (bucket) {
                     bucket.stage = newStage;
-                    
-                    // 기존 액션 아이템 유지하고 새 단계의 기본 액션 아이템 추가
-                    const existingActions = bucket.actions || [];
-                    const newDefaultActions = defaultActionItems[newStage] || [];
-                    
-                    // 새로 추가할 액션들 준비
-                    const actionsToAdd = [];
-                    newDefaultActions.forEach(actionText => {
-                        const exists = existingActions.some(action => action.text === actionText);
-                        if (!exists) {
-                            actionsToAdd.push({
-                                bucket_id: bucketId,
-                                text: actionText,
-                                completed: false,
-                                deadline: null,
-                                order_index: existingActions.length + actionsToAdd.length
-                            });
-                        }
-                    });
-                    
-                    // Supabase에 새 액션들 추가
-                    if (actionsToAdd.length > 0) {
-                        const { data: newActions, error: actionsError } = await supabase
-                            .from('actions')
-                            .insert(actionsToAdd)
-                            .select();
-
-                        if (actionsError) {
-                            throw new Error(`액션 아이템 추가 오류: ${actionsError.message}`);
-                        }
-
-                        // 로컬 상태에 새 액션들 추가
-                        bucket.actions = [...existingActions, ...newActions];
-                    }
                 }
                 
                 renderBuckets();
@@ -1136,6 +1629,8 @@
                 
                 if (currentView === 'buckets') {
                     renderBuckets();
+                } else if (currentView === 'stage') {
+                    renderStageView();
                 } else {
                     renderTodoView();
                 }
@@ -1170,6 +1665,8 @@
                 
                 if (currentView === 'buckets') {
                     renderBuckets();
+                } else if (currentView === 'stage') {
+                    renderStageView();
                 } else {
                     renderTodoView();
                 }
@@ -1201,6 +1698,8 @@
                 
                 if (currentView === 'buckets') {
                     renderBuckets();
+                } else if (currentView === 'stage') {
+                    renderStageView();
                 } else {
                     renderTodoView();
                 }
@@ -1230,7 +1729,11 @@
                 // 로컬 상태 업데이트
                 buckets = buckets.filter(b => b.id !== bucketId);
                 
-                renderBuckets();
+                if (currentView === 'buckets') {
+                    renderBuckets();
+                } else if (currentView === 'stage') {
+                    renderStageView();
+                }
                 updateTodayDeadlines();
                 showSuccess('광고주가 삭제되었습니다!');
             } catch (error) {
