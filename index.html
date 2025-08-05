@@ -16,6 +16,12 @@
             <p class="text-gray-600 text-lg">광고주별 버킷으로 업무를 체계적으로 관리하세요</p>
         </div>
 
+        <!-- 로딩 상태 -->
+        <div id="loadingIndicator" class="text-center py-8 hidden">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p class="mt-2 text-gray-600">데이터를 불러오는 중...</p>
+        </div>
+
         <!-- 오늘 마감 알림 -->
         <div id="todayDeadlines" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg hidden">
             <div class="flex items-center mb-2">
@@ -119,10 +125,6 @@
                         <span>➕</span>
                         <span>새 액션아이템</span>
                     </button>
-                    <button id="manageRecurringBtn" class="flex items-center gap-2 px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
-                        <span>🔄</span>
-                        <span>반복 관리</span>
-                    </button>
                     <button id="exportExcelBtn" class="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
                         <span>📊</span>
                         <span>엑셀 다운로드</span>
@@ -167,102 +169,6 @@
             <div id="todoEmpty" class="text-gray-500 text-center py-8 hidden">등록된 액션아이템이 없습니다.</div>
         </div>
 
-        <!-- 반복 관리 뷰 -->
-        <div id="recurringView" class="bg-white rounded-lg shadow-md p-6 hidden">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-800">반복 작업 관리</h2>
-                <div class="flex gap-2">
-                    <button id="addRecurringBtn" class="flex items-center gap-2 px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
-                        <span>➕</span>
-                        <span>새 반복 작업</span>
-                    </button>
-                    <button id="backToTodoBtn" class="flex items-center gap-2 px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
-                        <span>←</span>
-                        <span>돌아가기</span>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- 반복 작업 추가 폼 -->
-            <div id="addRecurringForm" class="bg-gray-50 p-4 rounded-lg mb-4 hidden">
-                <h3 class="text-lg font-semibold mb-3">새 반복 작업 등록</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">광고주 선택 *</label>
-                        <select id="recurringBucketSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">광고주를 선택하세요</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">작업명 *</label>
-                        <input type="text" id="recurringTaskName" placeholder="반복 작업명을 입력하세요" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">반복 주기 *</label>
-                        <select id="recurringTypeSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="daily">매일</option>
-                            <option value="weekly">매주</option>
-                        </select>
-                    </div>
-                    <div id="weeklyDayContainer" class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">요일 선택 *</label>
-                        <select id="recurringWeeklyDay" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="0">일요일</option>
-                            <option value="1">월요일</option>
-                            <option value="2">화요일</option>
-                            <option value="3">수요일</option>
-                            <option value="4">목요일</option>
-                            <option value="5">금요일</option>
-                            <option value="6">토요일</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">생성 시간 *</label>
-                        <input type="time" id="recurringTimeSelect" value="09:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">마감일 설정</label>
-                        <select id="recurringDeadlineType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="none">마감일 없음</option>
-                            <option value="same_day">당일 마감</option>
-                            <option value="next_day">다음날 마감</option>
-                            <option value="custom_days">N일 후 마감</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">시작일 *</label>
-                        <input type="date" id="recurringStartDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">종료일</label>
-                        <input type="date" id="recurringEndDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div id="customDaysContainer" class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">마감까지 일수</label>
-                        <input type="number" id="recurringCustomDays" value="1" min="1" max="30" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
-                        <select id="recurringStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="active">활성</option>
-                            <option value="paused">일시정지</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex gap-3">
-                    <button id="confirmAddRecurringBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">등록</button>
-                    <button id="cancelAddRecurringBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">취소</button>
-                </div>
-            </div>
-            
-            <div id="recurringList" class="space-y-3"></div>
-            <div id="recurringEmpty" class="text-gray-500 text-center py-8">등록된 반복 작업이 없습니다.</div>
-        </div>
-
         <!-- 메모장 뷰 -->
         <div id="memoView" class="bg-white rounded-lg shadow-md p-6 hidden">
             <div class="flex justify-between items-center mb-4">
@@ -291,14 +197,13 @@
     </footer>
 
     <script>
-        // Supabase 설정
-        const SUPABASE_URL = 'https://tnnmmdrzscylsqbmkbnq.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm1tZHJ6c2N5bHNxYm1rYm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNTU4ODMsImV4cCI6MjA2OTkzMTg4M30.AQbxl7n_b-yLbC46X9F9kQI_AHOO9cmXtYSu9eUifvI';
+        // ⚠️ 여기에 새로운 Supabase URL과 KEY를 입력하세요 ⚠️
+        const SUPABASE_URL = 'https://tnnmmdrzscylsqbmkbnq.supabase.co';  // 예: 'https://abcdefghijk.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm1tZHJ6c2N5bHNxYm1rYm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNTU4ODMsImV4cCI6MjA2OTkzMTg4M30.AQbxl7n_b-yLbC46X9F9kQI_AHOO9cmXtYSu9eUifvI';  // Supabase Dashboard > Settings > API에서 복사
         
         // 전역 변수
         let supabase;
         let buckets = [];
-        let recurringTasks = [];
         let userId;
         let currentView = 'buckets';
         let sortOrder = 'asc';
@@ -320,18 +225,13 @@
         // DOM 요소들
         let bucketsViewBtn, todoViewBtn, memoViewBtn, addBucketSection, addBucketBtn, addBucketForm;
         let bucketNameInput, unitPriceInput, quantityInput, productInput, contractTermsInput;
-        let confirmAddBtn, cancelAddBtn, sortBtn, sortText;
-        let todayDeadlines, todayDeadlinesList, todoView, memoView, bucketsView, recurringView;
+        let confirmAddBtn, cancelAddBtn, sortBtn, sortText, loadingIndicator;
+        let todayDeadlines, todayDeadlinesList, todoView, memoView, bucketsView;
         let todoList, todoEmpty, todoSortBtn, todoSortText;
         let toggleCompletedBtn, toggleCompletedText, bucketsContainer, emptyState;
         let exportExcelBtn, toggleBucketCompletedBtn, toggleBucketCompletedText;
         let addTodoBtn, addTodoForm, todoBucketSelect, todoDeadlineInput, todoTextInput;
         let confirmAddTodoBtn, cancelAddTodoBtn, memoTextarea, saveMemoBtn, clearMemoBtn, memoStatus;
-        let manageRecurringBtn, backToTodoBtn, addRecurringBtn, addRecurringForm;
-        let recurringBucketSelect, recurringTaskName, recurringTypeSelect, recurringTimeSelect;
-        let recurringStartDate, recurringEndDate, recurringStatus, confirmAddRecurringBtn, cancelAddRecurringBtn;
-        let recurringList, recurringEmpty, recurringDeadlineType, recurringCustomDays, customDaysContainer;
-        let recurringWeeklyDay, weeklyDayContainer, editingRecurringTask;
 
         // 앱 초기화
         async function initApp() {
@@ -341,9 +241,9 @@
                 // Supabase 클라이언트 초기화
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 
-                // 사용자 ID 설정
-                userId = localStorage.getItem('userId') || 'user_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('userId', userId);
+                // 사용자 ID 설정 (세션 기반)
+                userId = sessionStorage.getItem('userId') || 'user_' + Math.random().toString(36).substr(2, 9);
+                sessionStorage.setItem('userId', userId);
                 
                 // DOM 요소 초기화
                 initializeElements();
@@ -353,13 +253,6 @@
                 
                 // 데이터 로드
                 await loadData();
-                
-                // 반복 작업 로드
-                loadRecurringTasks();
-                
-                // 반복 작업 체크 시작
-                checkAndCreateRecurringActions();
-                setInterval(checkAndCreateRecurringActions, 60000); // 1분마다 체크
                 
                 // 오늘 마감 업데이트
                 updateTodayDeadlines();
@@ -388,12 +281,12 @@
             cancelAddBtn = document.getElementById('cancelAddBtn');
             sortBtn = document.getElementById('sortBtn');
             sortText = document.getElementById('sortText');
+            loadingIndicator = document.getElementById('loadingIndicator');
             todayDeadlines = document.getElementById('todayDeadlines');
             todayDeadlinesList = document.getElementById('todayDeadlinesList');
             todoView = document.getElementById('todoView');
             memoView = document.getElementById('memoView');
             bucketsView = document.getElementById('bucketsView');
-            recurringView = document.getElementById('recurringView');
             todoList = document.getElementById('todoList');
             todoEmpty = document.getElementById('todoEmpty');
             todoSortBtn = document.getElementById('todoSortBtn');
@@ -416,29 +309,6 @@
             saveMemoBtn = document.getElementById('saveMemoBtn');
             clearMemoBtn = document.getElementById('clearMemoBtn');
             memoStatus = document.getElementById('memoStatus');
-            
-            // 반복 관리 관련 DOM 요소들
-            manageRecurringBtn = document.getElementById('manageRecurringBtn');
-            backToTodoBtn = document.getElementById('backToTodoBtn');
-            addRecurringBtn = document.getElementById('addRecurringBtn');
-            addRecurringForm = document.getElementById('addRecurringForm');
-            recurringBucketSelect = document.getElementById('recurringBucketSelect');
-            recurringTaskName = document.getElementById('recurringTaskName');
-            recurringTypeSelect = document.getElementById('recurringTypeSelect');
-            recurringTimeSelect = document.getElementById('recurringTimeSelect');
-            recurringStartDate = document.getElementById('recurringStartDate');
-            recurringEndDate = document.getElementById('recurringEndDate');
-            recurringStatus = document.getElementById('recurringStatus');
-            confirmAddRecurringBtn = document.getElementById('confirmAddRecurringBtn');
-            cancelAddRecurringBtn = document.getElementById('cancelAddRecurringBtn');
-            recurringList = document.getElementById('recurringList');
-            recurringEmpty = document.getElementById('recurringEmpty');
-            recurringDeadlineType = document.getElementById('recurringDeadlineType');
-            recurringCustomDays = document.getElementById('recurringCustomDays');
-            customDaysContainer = document.getElementById('customDaysContainer');
-            recurringWeeklyDay = document.getElementById('recurringWeeklyDay');
-            weeklyDayContainer = document.getElementById('weeklyDayContainer');
-            editingRecurringTask = null;
         }
 
         // 이벤트 리스너 등록
@@ -476,31 +346,15 @@
 
             // 메모 자동저장
             memoTextarea.addEventListener('input', autoSaveMemo);
-            
-            // 반복 관리 관련
-            manageRecurringBtn.addEventListener('click', () => switchView('recurring'));
-            backToTodoBtn.addEventListener('click', () => switchView('todo'));
-            addRecurringBtn.addEventListener('click', showAddRecurringForm);
-            confirmAddRecurringBtn.addEventListener('click', addRecurringTask);
-            cancelAddRecurringBtn.addEventListener('click', hideAddRecurringForm);
-            
-            // 마감일 타입 변경 시 커스텀 일수 필드 표시/숨김
-            recurringDeadlineType.addEventListener('change', function() {
-                if (this.value === 'custom_days') {
-                    customDaysContainer.classList.remove('hidden');
-                } else {
-                    customDaysContainer.classList.add('hidden');
-                }
-            });
-            
-            // 반복 주기 변경 시 요일 선택 필드 표시/숨김
-            recurringTypeSelect.addEventListener('change', function() {
-                if (this.value === 'weekly') {
-                    weeklyDayContainer.classList.remove('hidden');
-                } else {
-                    weeklyDayContainer.classList.add('hidden');
-                }
-            });
+        }
+
+        // 로딩 표시/숨김
+        function showLoading() {
+            loadingIndicator.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingIndicator.classList.add('hidden');
         }
 
         // 에러 표시
@@ -515,33 +369,70 @@
             document.getElementById('app').insertBefore(errorDiv, document.getElementById('app').firstChild);
         }
 
-        // 데이터 로드 (Supabase 사용하지 않고 로컬스토리지 사용)
+        // 성공 알림
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            successDiv.textContent = message;
+            document.body.appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 3000);
+        }
+
+        // 데이터 로드 (Supabase에서)
         async function loadData() {
             try {
-                console.log('데이터 로드 시작');
+                console.log('Supabase에서 데이터 로드 시작');
+                showLoading();
                 
-                // 로컬스토리지에서 데이터 로드
-                const savedData = localStorage.getItem(`buckets_${userId}`);
-                buckets = savedData ? JSON.parse(savedData) : [];
-                
+                // 버킷 데이터 로드
+                const { data: bucketsData, error: bucketsError } = await supabase
+                    .from('buckets')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+
+                if (bucketsError) {
+                    throw new Error(`버킷 로드 오류: ${bucketsError.message}`);
+                }
+
+                // 액션 데이터 로드
+                let actionsData = [];
+                if (bucketsData.length > 0) {
+                    const { data: actions, error: actionsError } = await supabase
+                        .from('actions')
+                        .select('*')
+                        .in('bucket_id', bucketsData.map(b => b.id))
+                        .order('order_index', { ascending: true });
+
+                    if (actionsError) {
+                        throw new Error(`액션 로드 오류: ${actionsError.message}`);
+                    }
+                    actionsData = actions;
+                }
+
+                // 데이터 병합
+                buckets = bucketsData.map(bucket => ({
+                    ...bucket,
+                    actions: actionsData.filter(action => action.bucket_id === bucket.id)
+                }));
+
                 console.log('로드된 버킷 수:', buckets.length);
                 
-                // 현재 뷰에 따라 렌더링
+                // 뷰 렌더링
                 if (currentView === 'buckets') {
                     renderBuckets();
                 } else if (currentView === 'todo') {
                     renderTodoView();
                 }
+
+                hideLoading();
             } catch (error) {
                 console.error('데이터 로드 오류:', error);
+                hideLoading();
+                showError('데이터를 불러오는 중 오류가 발생했습니다: ' + error.message);
                 buckets = [];
                 renderBuckets();
             }
-        }
-
-        // 데이터 저장
-        function saveData() {
-            localStorage.setItem(`buckets_${userId}`, JSON.stringify(buckets));
         }
 
         // 뷰 전환
@@ -558,7 +449,6 @@
             todoView.classList.add('hidden');
             memoView.classList.add('hidden');
             bucketsView.classList.add('hidden');
-            recurringView.classList.add('hidden');
             
             if (view === 'buckets') {
                 bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
@@ -574,10 +464,6 @@
                 memoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-blue-500 text-blue-600';
                 memoView.classList.remove('hidden');
                 loadMemo();
-            } else if (view === 'recurring') {
-                recurringView.classList.remove('hidden');
-                renderRecurringView();
-                updateRecurringBucketSelect();
             }
         }
 
@@ -673,8 +559,8 @@
             contractTermsInput.value = '';
         }
 
-        // 새 버킷 추가
-        function addBucket() {
+        // 새 버킷 추가 (Supabase에 저장)
+        async function addBucket() {
             const name = bucketNameInput.value.trim();
             if (!name) {
                 alert('광고주명은 필수입니다.');
@@ -682,32 +568,62 @@
             }
 
             try {
+                showLoading();
+
+                // 버킷 데이터 준비
                 const bucketData = {
-                    id: Date.now(),
+                    user_id: userId,
                     name: name,
                     stage: '대기',
                     unit_price: unitPriceInput.value.trim(),
                     quantity: quantityInput.value.trim(),
                     product: productInput.value.trim(),
-                    contract_terms: contractTermsInput.value.trim(),
-                    created_at: new Date().toISOString(),
-                    actions: defaultActionItems['대기'].map((action, index) => ({
-                        id: Date.now() + index,
-                        text: action,
-                        completed: false,
-                        deadline: null,
-                        order_index: index
-                    }))
+                    contract_terms: contractTermsInput.value.trim()
                 };
 
-                buckets.unshift(bucketData);
-                saveData();
+                // Supabase에 버킷 저장
+                const { data: newBucket, error: bucketError } = await supabase
+                    .from('buckets')
+                    .insert([bucketData])
+                    .select()
+                    .single();
+
+                if (bucketError) {
+                    throw new Error(`버킷 생성 오류: ${bucketError.message}`);
+                }
+
+                // 기본 액션 아이템들 생성
+                const defaultActions = defaultActionItems['대기'].map((action, index) => ({
+                    bucket_id: newBucket.id,
+                    text: action,
+                    completed: false,
+                    deadline: null,
+                    order_index: index
+                }));
+
+                // Supabase에 액션 아이템들 저장
+                const { data: newActions, error: actionsError } = await supabase
+                    .from('actions')
+                    .insert(defaultActions)
+                    .select();
+
+                if (actionsError) {
+                    throw new Error(`액션 아이템 생성 오류: ${actionsError.message}`);
+                }
+
+                // 로컬 상태 업데이트
+                newBucket.actions = newActions;
+                buckets.unshift(newBucket);
+                
+                hideLoading();
                 hideAddForm();
                 renderBuckets();
                 updateTodayDeadlines();
+                showSuccess('새 광고주가 추가되었습니다!');
                 
             } catch (error) {
                 console.error('버킷 추가 오류:', error);
+                hideLoading();
                 alert('오류가 발생했습니다: ' + error.message);
             }
         }
@@ -998,17 +914,34 @@
             renderBuckets();
         }
 
-        function saveEditBucket(bucketId, newName) {
+        async function saveEditBucket(bucketId, newName) {
             if (!newName.trim()) return;
             
-            const bucket = buckets.find(b => b.id === bucketId);
-            if (bucket) {
-                bucket.name = newName.trim();
-                saveData();
+            try {
+                // Supabase 업데이트
+                const { error } = await supabase
+                    .from('buckets')
+                    .update({ name: newName.trim() })
+                    .eq('id', bucketId)
+                    .eq('user_id', userId);
+
+                if (error) {
+                    throw new Error(`버킷 이름 수정 오류: ${error.message}`);
+                }
+
+                // 로컬 상태 업데이트
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (bucket) {
+                    bucket.name = newName.trim();
+                }
+                
+                editingBucket = null;
+                renderBuckets();
+                showSuccess('광고주명이 수정되었습니다!');
+            } catch (error) {
+                console.error('버킷 이름 수정 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
             }
-            
-            editingBucket = null;
-            renderBuckets();
         }
 
         function cancelEditBucket() {
@@ -1021,19 +954,35 @@
             renderBuckets();
         }
 
-        function saveEditAction(actionId, newText) {
+        async function saveEditAction(actionId, newText) {
             if (!newText.trim()) return;
             
-            buckets.forEach(bucket => {
-                const action = bucket.actions?.find(a => a.id === actionId);
-                if (action) {
-                    action.text = newText.trim();
-                    saveData();
+            try {
+                // Supabase 업데이트
+                const { error } = await supabase
+                    .from('actions')
+                    .update({ text: newText.trim() })
+                    .eq('id', actionId);
+
+                if (error) {
+                    throw new Error(`액션 아이템 수정 오류: ${error.message}`);
                 }
-            });
-            
-            editingAction = null;
-            renderBuckets();
+
+                // 로컬 상태 업데이트
+                buckets.forEach(bucket => {
+                    const action = bucket.actions?.find(a => a.id === actionId);
+                    if (action) {
+                        action.text = newText.trim();
+                    }
+                });
+                
+                editingAction = null;
+                renderBuckets();
+                showSuccess('액션아이템이 수정되었습니다!');
+            } catch (error) {
+                console.error('액션 아이템 수정 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
+            }
         }
 
         function cancelEditAction() {
@@ -1041,67 +990,149 @@
             renderBuckets();
         }
 
-        function updateBucketInfo(bucketId, field, value) {
-            const bucket = buckets.find(b => b.id === bucketId);
-            if (bucket) {
-                bucket[field] = value;
-                saveData();
+        async function updateBucketInfo(bucketId, field, value) {
+            try {
+                // Supabase 업데이트
+                const { error } = await supabase
+                    .from('buckets')
+                    .update({ [field]: value })
+                    .eq('id', bucketId)
+                    .eq('user_id', userId);
+
+                if (error) {
+                    throw new Error(`버킷 정보 수정 오류: ${error.message}`);
+                }
+
+                // 로컬 상태 업데이트
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (bucket) {
+                    bucket[field] = value;
+                }
+            } catch (error) {
+                console.error('버킷 정보 수정 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
-        function changeStage(bucketId, newStage) {
-            const bucket = buckets.find(b => b.id === bucketId);
-            if (bucket) {
-                bucket.stage = newStage;
-                
-                // 기존 액션 아이템 유지하고 새 단계의 기본 액션 아이템 추가
-                const existingActions = bucket.actions || [];
-                const newDefaultActions = defaultActionItems[newStage] || [];
-                
-                newDefaultActions.forEach(actionText => {
-                    const exists = existingActions.some(action => action.text === actionText);
-                    if (!exists) {
-                        existingActions.push({
-                            id: Date.now() + Math.random(),
-                            text: actionText,
-                            completed: false,
-                            deadline: null
-                        });
+        async function changeStage(bucketId, newStage) {
+            try {
+                // Supabase에서 버킷 단계 업데이트
+                const { error: bucketError } = await supabase
+                    .from('buckets')
+                    .update({ stage: newStage })
+                    .eq('id', bucketId)
+                    .eq('user_id', userId);
+
+                if (bucketError) {
+                    throw new Error(`단계 변경 오류: ${bucketError.message}`);
+                }
+
+                // 로컬 상태에서 버킷 찾기
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (bucket) {
+                    bucket.stage = newStage;
+                    
+                    // 기존 액션 아이템 유지하고 새 단계의 기본 액션 아이템 추가
+                    const existingActions = bucket.actions || [];
+                    const newDefaultActions = defaultActionItems[newStage] || [];
+                    
+                    // 새로 추가할 액션들 준비
+                    const actionsToAdd = [];
+                    newDefaultActions.forEach(actionText => {
+                        const exists = existingActions.some(action => action.text === actionText);
+                        if (!exists) {
+                            actionsToAdd.push({
+                                bucket_id: bucketId,
+                                text: actionText,
+                                completed: false,
+                                deadline: null,
+                                order_index: existingActions.length + actionsToAdd.length
+                            });
+                        }
+                    });
+                    
+                    // Supabase에 새 액션들 추가
+                    if (actionsToAdd.length > 0) {
+                        const { data: newActions, error: actionsError } = await supabase
+                            .from('actions')
+                            .insert(actionsToAdd)
+                            .select();
+
+                        if (actionsError) {
+                            throw new Error(`액션 아이템 추가 오류: ${actionsError.message}`);
+                        }
+
+                        // 로컬 상태에 새 액션들 추가
+                        bucket.actions = [...existingActions, ...newActions];
                     }
-                });
+                }
                 
-                bucket.actions = existingActions;
-                saveData();
                 renderBuckets();
+                showSuccess('단계가 변경되었습니다!');
+            } catch (error) {
+                console.error('단계 변경 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
-        function addCustomAction(bucketId) {
+        async function addCustomAction(bucketId) {
             const text = prompt('새 액션아이템을 입력하세요:');
             if (!text || !text.trim()) return;
 
-            const bucket = buckets.find(b => b.id === bucketId);
-            if (bucket) {
-                if (!bucket.actions) bucket.actions = [];
-                bucket.actions.push({
-                    id: Date.now(),
-                    text: text.trim(),
-                    completed: false,
-                    deadline: null
-                });
-                saveData();
+            try {
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (!bucket) return;
+
+                // Supabase에 새 액션 추가
+                const { data: newAction, error } = await supabase
+                    .from('actions')
+                    .insert([{
+                        bucket_id: bucketId,
+                        text: text.trim(),
+                        completed: false,
+                        deadline: null,
+                        order_index: bucket.actions.length
+                    }])
+                    .select()
+                    .single();
+
+                if (error) {
+                    throw new Error(`액션 아이템 추가 오류: ${error.message}`);
+                }
+
+                // 로컬 상태 업데이트
+                bucket.actions.push(newAction);
+                
                 renderBuckets();
                 updateTodayDeadlines();
+                showSuccess('액션아이템이 추가되었습니다!');
+            } catch (error) {
+                console.error('액션 아이템 추가 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
-        function toggleActionItem(bucketId, actionId) {
-            const bucket = buckets.find(b => b.id === bucketId);
-            const action = bucket?.actions?.find(a => a.id === actionId);
-            
-            if (action) {
-                action.completed = !action.completed;
-                saveData();
+        async function toggleActionItem(bucketId, actionId) {
+            try {
+                const bucket = buckets.find(b => b.id === bucketId);
+                const action = bucket?.actions?.find(a => a.id === actionId);
+                
+                if (!action) return;
+
+                const newCompleted = !action.completed;
+
+                // Supabase 업데이트
+                const { error } = await supabase
+                    .from('actions')
+                    .update({ completed: newCompleted })
+                    .eq('id', actionId);
+
+                if (error) {
+                    throw new Error(`액션 아이템 상태 변경 오류: ${error.message}`);
+                }
+
+                // 로컬 상태 업데이트
+                action.completed = newCompleted;
                 
                 if (currentView === 'buckets') {
                     renderBuckets();
@@ -1109,16 +1140,32 @@
                     renderTodoView();
                 }
                 updateTodayDeadlines();
+            } catch (error) {
+                console.error('액션 아이템 상태 변경 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
-        function setDeadline(bucketId, actionId, deadline) {
-            const bucket = buckets.find(b => b.id === bucketId);
-            const action = bucket?.actions?.find(a => a.id === actionId);
-            
-            if (action) {
+        async function setDeadline(bucketId, actionId, deadline) {
+            try {
+                const bucket = buckets.find(b => b.id === bucketId);
+                const action = bucket?.actions?.find(a => a.id === actionId);
+                
+                if (!action) return;
+
+                // Supabase 업데이트
+                const { error } = await supabase
+                    .from('actions')
+                    .update({ deadline: deadline || null })
+                    .eq('id', actionId);
+
+                if (error) {
+                    throw new Error(`마감일 설정 오류: ${error.message}`);
+                }
+
+                // 로컬 상태 업데이트
                 action.deadline = deadline || null;
-                saveData();
+                
                 updateTodayDeadlines();
                 
                 if (currentView === 'buckets') {
@@ -1126,16 +1173,31 @@
                 } else {
                     renderTodoView();
                 }
+            } catch (error) {
+                console.error('마감일 설정 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
-        function deleteActionItem(bucketId, actionId) {
+        async function deleteActionItem(bucketId, actionId) {
             if (!confirm('이 액션아이템을 삭제하시겠습니까?')) return;
 
-            const bucket = buckets.find(b => b.id === bucketId);
-            if (bucket && bucket.actions) {
-                bucket.actions = bucket.actions.filter(a => a.id !== actionId);
-                saveData();
+            try {
+                // Supabase에서 삭제
+                const { error } = await supabase
+                    .from('actions')
+                    .delete()
+                    .eq('id', actionId);
+
+                if (error) {
+                    throw new Error(`액션 아이템 삭제 오류: ${error.message}`);
+                }
+
+                // 로컬 상태 업데이트
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (bucket && bucket.actions) {
+                    bucket.actions = bucket.actions.filter(a => a.id !== actionId);
+                }
                 
                 if (currentView === 'buckets') {
                     renderBuckets();
@@ -1143,16 +1205,38 @@
                     renderTodoView();
                 }
                 updateTodayDeadlines();
+                showSuccess('액션아이템이 삭제되었습니다!');
+            } catch (error) {
+                console.error('액션 아이템 삭제 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
-        function deleteBucket(bucketId) {
+        async function deleteBucket(bucketId) {
             if (!confirm('정말로 이 프로젝트를 삭제하시겠습니까?\n모든 액션아이템도 함께 삭제됩니다.')) return;
 
-            buckets = buckets.filter(b => b.id !== bucketId);
-            saveData();
-            renderBuckets();
-            updateTodayDeadlines();
+            try {
+                // Supabase에서 버킷 삭제 (CASCADE로 액션들도 자동 삭제됨)
+                const { error } = await supabase
+                    .from('buckets')
+                    .delete()
+                    .eq('id', bucketId)
+                    .eq('user_id', userId);
+
+                if (error) {
+                    throw new Error(`버킷 삭제 오류: ${error.message}`);
+                }
+
+                // 로컬 상태 업데이트
+                buckets = buckets.filter(b => b.id !== bucketId);
+                
+                renderBuckets();
+                updateTodayDeadlines();
+                showSuccess('광고주가 삭제되었습니다!');
+            } catch (error) {
+                console.error('버킷 삭제 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
+            }
         }
 
         // 투두리스트 관련 함수들
@@ -1179,7 +1263,7 @@
             });
         }
 
-        function addTodoItem() {
+        async function addTodoItem() {
             const bucketId = parseInt(todoBucketSelect.value);
             const text = todoTextInput.value.trim();
             const deadline = todoDeadlineInput.value || null;
@@ -1194,20 +1278,37 @@
                 return;
             }
 
-            const bucket = buckets.find(b => b.id === bucketId);
-            if (bucket) {
-                if (!bucket.actions) bucket.actions = [];
-                bucket.actions.push({
-                    id: Date.now(),
-                    text: text,
-                    completed: false,
-                    deadline: deadline
-                });
+            try {
+                const bucket = buckets.find(b => b.id === bucketId);
+                if (!bucket) return;
+
+                // Supabase에 새 액션 추가
+                const { data: newAction, error } = await supabase
+                    .from('actions')
+                    .insert([{
+                        bucket_id: bucketId,
+                        text: text,
+                        completed: false,
+                        deadline: deadline,
+                        order_index: bucket.actions.length
+                    }])
+                    .select()
+                    .single();
+
+                if (error) {
+                    throw new Error(`액션 아이템 추가 오류: ${error.message}`);
+                }
+
+                // 로컬 상태 업데이트
+                bucket.actions.push(newAction);
                 
-                saveData();
                 hideAddTodoForm();
                 renderTodoView();
                 updateTodayDeadlines();
+                showSuccess('액션아이템이 추가되었습니다!');
+            } catch (error) {
+                console.error('액션 아이템 추가 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
@@ -1267,7 +1368,7 @@
                 XLSX.writeFile(wb, filename);
 
                 // 다운로드 완료 알림
-                showNotification('엑셀 파일이 다운로드되었습니다!', 'success');
+                showSuccess('엑셀 파일이 다운로드되었습니다!');
 
             } catch (error) {
                 console.error('엑셀 내보내기 오류:', error);
@@ -1276,29 +1377,82 @@
         }
 
         // 메모장 기능
-        function loadMemo() {
-            const savedMemo = localStorage.getItem(`memo_${userId}`);
-            if (savedMemo) {
-                memoTextarea.value = savedMemo;
-                memoStatus.textContent = '저장된 메모를 불러왔습니다.';
-            } else {
+        async function loadMemo() {
+            try {
+                // Supabase에서 메모 로드
+                const { data: memoData, error } = await supabase
+                    .from('memos')
+                    .select('content')
+                    .eq('user_id', userId)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') { // PGRST116 = 데이터 없음
+                    throw new Error(`메모 로드 오류: ${error.message}`);
+                }
+
+                if (memoData) {
+                    memoTextarea.value = memoData.content || '';
+                    memoStatus.textContent = '저장된 메모를 불러왔습니다.';
+                } else {
+                    memoTextarea.value = '';
+                    memoStatus.textContent = '새로운 메모를 작성하세요.';
+                }
+            } catch (error) {
+                console.error('메모 로드 오류:', error);
                 memoTextarea.value = '';
-                memoStatus.textContent = '새로운 메모를 작성하세요.';
+                memoStatus.textContent = '메모 로드 중 오류가 발생했습니다.';
             }
         }
 
-        function saveMemo() {
-            const memoContent = memoTextarea.value;
-            localStorage.setItem(`memo_${userId}`, memoContent);
-            memoStatus.textContent = '메모가 저장되었습니다.';
-            showNotification('메모가 저장되었습니다!', 'success');
+        async function saveMemo() {
+            try {
+                const memoContent = memoTextarea.value;
+                
+                // Supabase에 메모 저장 (upsert 사용)
+                const { error } = await supabase
+                    .from('memos')
+                    .upsert([{
+                        user_id: userId,
+                        content: memoContent,
+                        updated_at: new Date().toISOString()
+                    }], {
+                        onConflict: 'user_id'
+                    });
+
+                if (error) {
+                    throw new Error(`메모 저장 오류: ${error.message}`);
+                }
+
+                memoStatus.textContent = '메모가 저장되었습니다.';
+                showSuccess('메모가 저장되었습니다!');
+            } catch (error) {
+                console.error('메모 저장 오류:', error);
+                memoStatus.textContent = '메모 저장 중 오류가 발생했습니다.';
+                alert('오류가 발생했습니다: ' + error.message);
+            }
         }
 
-        function clearMemo() {
-            if (confirm('정말로 모든 메모를 삭제하시겠습니까?')) {
+        async function clearMemo() {
+            if (!confirm('정말로 모든 메모를 삭제하시겠습니까?')) return;
+
+            try {
+                // Supabase에서 메모 삭제
+                const { error } = await supabase
+                    .from('memos')
+                    .delete()
+                    .eq('user_id', userId);
+
+                if (error) {
+                    throw new Error(`메모 삭제 오류: ${error.message}`);
+                }
+
                 memoTextarea.value = '';
-                localStorage.removeItem(`memo_${userId}`);
                 memoStatus.textContent = '메모가 삭제되었습니다.';
+                showSuccess('메모가 삭제되었습니다!');
+            } catch (error) {
+                console.error('메모 삭제 오류:', error);
+                memoStatus.textContent = '메모 삭제 중 오류가 발생했습니다.';
+                alert('오류가 발생했습니다: ' + error.message);
             }
         }
 
@@ -1307,360 +1461,31 @@
             clearTimeout(autoSaveTimeout);
             memoStatus.textContent = '입력 중...';
             
-            autoSaveTimeout = setTimeout(() => {
-                const memoContent = memoTextarea.value;
-                localStorage.setItem(`memo_${userId}`, memoContent);
-                memoStatus.textContent = '자동 저장됨';
-            }, 1000);
-        }
-
-        // 알림 표시 함수
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
-            notification.className = `fixed top-4 right-4 ${bgColor} text-white px-4 py-2 rounded-lg shadow-lg z-50`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-
-        // 반복 작업 관리 기능
-        function loadRecurringTasks() {
-            const savedTasks = localStorage.getItem(`recurring_tasks_${userId}`);
-            recurringTasks = savedTasks ? JSON.parse(savedTasks) : [];
-        }
-
-        function saveRecurringTasks() {
-            localStorage.setItem(`recurring_tasks_${userId}`, JSON.stringify(recurringTasks));
-        }
-
-        function showAddRecurringForm() {
-            editingRecurringTask = null; // 새 작업 추가 모드
-            addRecurringForm.classList.remove('hidden');
-            updateRecurringBucketSelect();
-            
-            // 기본값 설정
-            const today = new Date();
-            recurringStartDate.value = today.toISOString().split('T')[0];
-            
-            // 폼 제목 변경
-            addRecurringForm.querySelector('h3').textContent = '새 반복 작업 등록';
-            confirmAddRecurringBtn.textContent = '등록';
-            
-            recurringTaskName.focus();
-        }
-
-        function hideAddRecurringForm() {
-            addRecurringForm.classList.add('hidden');
-            editingRecurringTask = null;
-            recurringBucketSelect.value = '';
-            recurringTaskName.value = '';
-            recurringTypeSelect.value = 'daily';
-            recurringTimeSelect.value = '09:00';
-            recurringStartDate.value = '';
-            recurringEndDate.value = '';
-            recurringStatus.value = 'active';
-            recurringDeadlineType.value = 'none';
-            recurringCustomDays.value = '1';
-            recurringWeeklyDay.value = '1'; // 기본값: 월요일
-            customDaysContainer.classList.add('hidden');
-            weeklyDayContainer.classList.add('hidden');
-        }
-
-        function updateRecurringBucketSelect() {
-            recurringBucketSelect.innerHTML = '<option value="">광고주를 선택하세요</option>';
-            buckets.forEach(bucket => {
-                const option = document.createElement('option');
-                option.value = bucket.id;
-                option.textContent = bucket.name;
-                recurringBucketSelect.appendChild(option);
-            });
-        }
-
-        function addRecurringTask() {
-            const bucketId = parseInt(recurringBucketSelect.value);
-            const taskName = recurringTaskName.value.trim();
-            const type = recurringTypeSelect.value;
-            const time = recurringTimeSelect.value;
-            const startDate = recurringStartDate.value;
-            const endDate = recurringEndDate.value || null;
-            const status = recurringStatus.value;
-            const deadlineType = recurringDeadlineType.value;
-            const customDays = parseInt(recurringCustomDays.value) || 1;
-            const weeklyDay = type === 'weekly' ? parseInt(recurringWeeklyDay.value) : null;
-
-            if (!bucketId || !taskName || !startDate) {
-                alert('필수 항목을 모두 입력해주세요.');
-                return;
-            }
-
-            if (editingRecurringTask) {
-                // 수정 모드
-                const task = recurringTasks.find(t => t.id === editingRecurringTask);
-                if (task) {
-                    task.bucket_id = bucketId;
-                    task.task_name = taskName;
-                    task.recurring_type = type;
-                    task.recurring_time = time;
-                    task.start_date = startDate;
-                    task.end_date = endDate;
-                    task.status = status;
-                    task.deadline_type = deadlineType;
-                    task.custom_days = customDays;
-                    task.weekly_day = weeklyDay;
-                    task.updated_at = new Date().toISOString();
-                    
-                    showNotification('반복 작업이 수정되었습니다.', 'success');
-                }
-            } else {
-                // 새 작업 추가 모드
-                const recurringTaskData = {
-                    id: Date.now(),
-                    bucket_id: bucketId,
-                    task_name: taskName,
-                    recurring_type: type,
-                    recurring_time: time,
-                    start_date: startDate,
-                    end_date: endDate,
-                    status: status,
-                    deadline_type: deadlineType,
-                    custom_days: customDays,
-                    weekly_day: weeklyDay,
-                    last_generated: null,
-                    created_at: new Date().toISOString()
-                };
-
-                recurringTasks.push(recurringTaskData);
-                showNotification('반복 작업이 등록되었습니다.', 'success');
-            }
-
-            saveRecurringTasks();
-            hideAddRecurringForm();
-            renderRecurringView();
-        }
-
-        function renderRecurringView() {
-            if (recurringTasks.length === 0) {
-                recurringList.innerHTML = '';
-                recurringEmpty.classList.remove('hidden');
-                return;
-            }
-
-            recurringEmpty.classList.add('hidden');
-            
-            recurringList.innerHTML = recurringTasks.map(task => {
-                const bucket = buckets.find(b => b.id === task.bucket_id);
-                const bucketName = bucket ? bucket.name : '삭제된 광고주';
-                
-                const getDeadlineText = () => {
-                    switch(task.deadline_type) {
-                        case 'same_day': return '당일 마감';
-                        case 'next_day': return '다음날 마감';
-                        case 'custom_days': return `${task.custom_days}일 후 마감`;
-                        default: return '마감일 없음';
-                    }
-                };
-                
-                const getRecurringText = () => {
-                    if (task.recurring_type === 'daily') {
-                        return `매일 ${task.recurring_time}`;
-                    } else {
-                        const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-                        const dayName = task.weekly_day !== null ? dayNames[task.weekly_day] : '설정 오류';
-                        return `매주 ${dayName} ${task.recurring_time}`;
-                    }
-                };
-                
-                return `
-                    <div class="p-4 border border-gray-200 rounded-lg ${task.status === 'active' ? 'bg-white' : 'bg-gray-50'}">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <h4 class="font-semibold text-gray-800">${task.task_name.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</h4>
-                                <p class="text-sm text-gray-600">[${bucketName}] - ${getRecurringText()}</p>
-                                <p class="text-xs text-blue-600">${getDeadlineText()}</p>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="editRecurringTask(${task.id})" class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
-                                    수정
-                                </button>
-                                <button onclick="toggleRecurringStatus(${task.id})" class="px-2 py-1 text-xs rounded ${task.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}">
-                                    ${task.status === 'active' ? '활성' : '일시정지'}
-                                </button>
-                                <button onclick="deleteRecurringTask(${task.id})" class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">
-                                    삭제
-                                </button>
-                            </div>
-                        </div>
-                        <div class="text-xs text-gray-500">
-                            <p>시작일: ${task.start_date} ${task.end_date ? `| 종료일: ${task.end_date}` : ''}</p>
-                            <p>마지막 생성: ${task.last_generated || '아직 생성된 작업 없음'}</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function editRecurringTask(taskId) {
-            const task = recurringTasks.find(t => t.id === taskId);
-            if (!task) return;
-
-            editingRecurringTask = taskId;
-            
-            // 폼 표시
-            addRecurringForm.classList.remove('hidden');
-            updateRecurringBucketSelect();
-            
-            // 기존 데이터로 폼 채우기
-            recurringBucketSelect.value = task.bucket_id;
-            recurringTaskName.value = task.task_name;
-            recurringTypeSelect.value = task.recurring_type;
-            recurringTimeSelect.value = task.recurring_time;
-            recurringStartDate.value = task.start_date;
-            recurringEndDate.value = task.end_date || '';
-            recurringStatus.value = task.status;
-            recurringDeadlineType.value = task.deadline_type || 'none';
-            recurringCustomDays.value = task.custom_days || 1;
-            
-            // 요일 설정 (주간 반복인 경우)
-            if (task.recurring_type === 'weekly') {
-                weeklyDayContainer.classList.remove('hidden');
-                recurringWeeklyDay.value = task.weekly_day || 1;
-            } else {
-                weeklyDayContainer.classList.add('hidden');
-            }
-            
-            // 커스텀 일수 설정 (해당하는 경우)
-            if (task.deadline_type === 'custom_days') {
-                customDaysContainer.classList.remove('hidden');
-            } else {
-                customDaysContainer.classList.add('hidden');
-            }
-            
-            // 폼 제목과 버튼 텍스트 변경
-            addRecurringForm.querySelector('h3').textContent = '반복 작업 수정';
-            confirmAddRecurringBtn.textContent = '수정';
-            
-            recurringTaskName.focus();
-        }
-
-        function toggleRecurringStatus(taskId) {
-            const task = recurringTasks.find(t => t.id === taskId);
-            if (!task) return;
-
-            task.status = task.status === 'active' ? 'paused' : 'active';
-            saveRecurringTasks();
-            renderRecurringView();
-            
-            showNotification(`반복 작업이 ${task.status === 'active' ? '활성화' : '일시정지'}되었습니다.`, 'info');
-        }
-
-        function deleteRecurringTask(taskId) {
-            if (!confirm('이 반복 작업을 삭제하시겠습니까?')) return;
-
-            recurringTasks = recurringTasks.filter(task => task.id !== taskId);
-            saveRecurringTasks();
-            renderRecurringView();
-            
-            showNotification('반복 작업이 삭제되었습니다.', 'info');
-        }
-
-        // 반복 작업 스케줄링 - 설정된 시간에 자동으로 액션아이템 생성
-        function checkAndCreateRecurringActions() {
-            const now = new Date();
-            const currentTime = now.toTimeString().slice(0, 5); // HH:MM 형식
-            const currentDate = now.toISOString().split('T')[0];
-            const currentDay = now.getDay(); // 0=일요일, 1=월요일, ...
-
-            recurringTasks.forEach(task => {
-                if (task.status !== 'active') return;
-                
-                // 종료일 체크
-                if (task.end_date && currentDate > task.end_date) return;
-                
-                // 시작일 체크
-                if (currentDate < task.start_date) return;
-                
-                // 시간 체크 (±2분 오차 허용)
-                const taskTime = new Date(`1970-01-01T${task.recurring_time}:00`);
-                const currentTimeObj = new Date(`1970-01-01T${currentTime}:00`);
-                const timeDiff = Math.abs(currentTimeObj - taskTime) / (1000 * 60); // 분 단위
-                
-                if (timeDiff > 2) return; // 2분 이상 차이나면 패스
-                
-                // 마지막 생성일 체크 - 오늘 이미 생성되었으면 패스
-                if (task.last_generated === currentDate) return;
-                
-                // 주간 반복의 경우 요일 체크
-                if (task.recurring_type === 'weekly') {
-                    // 새로운 방식: 설정된 요일과 현재 요일 비교
-                    const targetDay = task.weekly_day !== null ? task.weekly_day : new Date(task.start_date).getDay();
-                    if (targetDay !== currentDay) return;
-                }
-                
-                // 해당 버킷이 존재하는지 확인
-                const bucket = buckets.find(b => b.id === task.bucket_id);
-                if (!bucket) return;
-                
-                // 액션아이템 생성
+            autoSaveTimeout = setTimeout(async () => {
                 try {
-                    if (!bucket.actions) bucket.actions = [];
+                    const memoContent = memoTextarea.value;
                     
-                    // 마감일 계산
-                    let deadline = null;
-                    const currentDateObj = new Date(currentDate);
-                    
-                    switch(task.deadline_type) {
-                        case 'same_day':
-                            deadline = currentDate;
-                            break;
-                        case 'next_day':
-                            currentDateObj.setDate(currentDateObj.getDate() + 1);
-                            deadline = currentDateObj.toISOString().split('T')[0];
-                            break;
-                        case 'custom_days':
-                            currentDateObj.setDate(currentDateObj.getDate() + (task.custom_days || 1));
-                            deadline = currentDateObj.toISOString().split('T')[0];
-                            break;
-                        default:
-                            deadline = null;
+                    // Supabase에 자동 저장
+                    const { error } = await supabase
+                        .from('memos')
+                        .upsert([{
+                            user_id: userId,
+                            content: memoContent,
+                            updated_at: new Date().toISOString()
+                        }], {
+                            onConflict: 'user_id'
+                        });
+
+                    if (error) {
+                        throw new Error(`자동 저장 오류: ${error.message}`);
                     }
-                    
-                    const newAction = {
-                        id: Date.now() + Math.random(),
-                        text: `${task.task_name} (${currentDate})`,
-                        completed: false,
-                        deadline: deadline,
-                        recurring_task_id: task.id,
-                        created_at: new Date().toISOString()
-                    };
-                    
-                    bucket.actions.push(newAction);
-                    
-                    // 마지막 생성일 업데이트
-                    task.last_generated = currentDate;
-                    
-                    // 데이터 저장
-                    saveData();
-                    saveRecurringTasks();
-                    
-                    console.log(`반복 작업 생성됨: ${task.task_name} -> [${bucket.name}] (마감일: ${deadline || '없음'})`);
-                    
-                    // 현재 뷰 업데이트
-                    if (currentView === 'buckets') {
-                        renderBuckets();
-                    } else if (currentView === 'todo') {
-                        renderTodoView();
-                    }
-                    
-                    updateTodayDeadlines();
-                    
+
+                    memoStatus.textContent = '자동 저장됨';
                 } catch (error) {
-                    console.error('반복 작업 생성 오류:', error);
+                    console.error('자동 저장 오류:', error);
+                    memoStatus.textContent = '자동 저장 실패';
                 }
-            });
+            }, 2000); // 2초 후 자동 저장
         }
 
         // 페이지 로드시 앱 초기화
@@ -1668,4 +1493,3 @@
     </script>
 </body>
 </html>
-
