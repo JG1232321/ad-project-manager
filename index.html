@@ -476,8 +476,8 @@
 
     <script>
         // ⚠️ 여기에 새로운 Supabase URL과 KEY를 입력하세요 ⚠️
-        const SUPABASE_URL = 'https://tnnmmdrzscylsqbmkbnq.supabase.co';  // 예: 'https://abcdefghijk.supabase.co'
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm1tZHJ6c2N5bHNxYm1rYm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNTU4ODMsImV4cCI6MjA2OTkzMTg4M30.AQbxl7n_b-yLbC46X9F9kQI_AHOO9cmXtYSu9eUifvI';  // Supabase Dashboard > Settings > API에서 복사
+        const SUPABASE_URL = 'https://tnnmmdrzscylsqbmkbnq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm1tZHJ6c2N5bHNxYm1rYm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNTU4ODMsImV4cCI6MjA2OTkzMTg4M30.AQbxl7n_b-yLbC46X9F9kQI_AHOO9cmXtYSu9eUifvI';
         
         // 전역 변수
         let supabase;
@@ -494,14 +494,6 @@
         let editingRule = null;
         let showCompletedTodos = true;
         let showCompletedInBuckets = true;
-
-        // 기본 액션 아이템 (단계 변경 시 자동 생성)
-        const defaultActionItems = {
-            '대기': ['광고주 요구사항 수집', '예산 및 일정 확정', '계약서 검토'],
-            '진행_광고제작': ['크리에이티브 컨셉 기획', '디자인 시안 제작', '광고주 피드백 반영', '최종 소재 승인'],
-            '진행_광고운영': ['광고 계정 세팅', '캠페인 런칭', '일일 성과 모니터링', '최적화 작업'],
-            '진행_매출정산': ['최종 성과 리포트 작성', '매출 정산', '광고주 결과 보고']
-        };
 
         // DOM 요소들
         let bucketsViewBtn, stageViewBtn, todoViewBtn, recurringViewBtn, memoViewBtn, addBucketSection, addBucketBtn, addBucketForm;
@@ -714,7 +706,6 @@
 
         // 인증 이벤트 리스너
         function setupAuthEventListeners() {
-            // Enter 키 처리
             loginUserId.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') loginPassword.focus();
             });
@@ -742,7 +733,6 @@
             confirmAddRuleBtn.addEventListener('click', addRecurringRule);
             cancelAddRuleBtn.addEventListener('click', hideAddRecurringForm);
 
-            // 반복 주기 변경 시 옵션 표시/숨김
             repeatTypeSelect.addEventListener('change', function() {
                 weeklyDayContainer.classList.add('hidden');
                 monthlyDateContainer.classList.add('hidden');
@@ -754,7 +744,6 @@
                 }
             });
 
-            // 마감일 타입 변경 시 일수 입력 표시/숨김
             deadlineTypeSelect.addEventListener('change', function() {
                 if (this.value === 'days_after') {
                     deadlineDaysContainer.classList.remove('hidden');
@@ -778,7 +767,6 @@
                 try {
                     const authData = JSON.parse(savedAuth);
                     
-                    // 저장된 인증 정보 검증
                     const { data: userData, error } = await supabase
                         .from('users')
                         .select('*')
@@ -794,8 +782,6 @@
                         hideLoginModal();
                         await loadData();
                         updateTodayDeadlines();
-                        
-                        // 반복 규칙 체크 시작
                         startRecurringCheck();
                         return;
                     }
@@ -804,7 +790,6 @@
                 }
             }
             
-            // 로그인이 필요한 경우
             showLoginModal();
         }
 
@@ -859,7 +844,6 @@
                 
                 const passwordHash = simpleHash(passwordValue);
                 
-                // 사용자 인증
                 const { data: userData, error } = await supabase
                     .from('users')
                     .select('*')
@@ -873,13 +857,11 @@
                     return;
                 }
                 
-                // 로그인 성공
                 currentUser = userData;
                 userId = userData.user_id;
                 userName.textContent = userData.name;
                 userInfo.classList.remove('hidden');
                 
-                // 인증 정보 저장
                 localStorage.setItem('userAuth', JSON.stringify({
                     userId: userData.user_id,
                     passwordHash: passwordHash,
@@ -932,7 +914,6 @@
                 authStatus.textContent = '회원가입 중...';
                 authStatus.className = 'mt-4 text-sm text-center text-blue-600';
                 
-                // 사용자 ID 중복 확인
                 const { data: existingUser } = await supabase
                     .from('users')
                     .select('user_id')
@@ -947,7 +928,6 @@
                 
                 const passwordHash = simpleHash(passwordValue);
                 
-                // 새 사용자 등록
                 const { data: newUser, error } = await supabase
                     .from('users')
                     .insert([{
@@ -966,7 +946,6 @@
                 authStatus.textContent = '회원가입이 완료되었습니다! 로그인해주세요.';
                 authStatus.className = 'mt-4 text-sm text-center text-green-600';
                 
-                // 폼 초기화 후 로그인 폼으로 전환
                 setTimeout(() => {
                     signupUserId.value = '';
                     signupPassword.value = '';
@@ -994,7 +973,6 @@
                 userInfo.classList.add('hidden');
                 showLoginModal();
                 
-                // 폼 초기화
                 loginUserId.value = '';
                 loginPassword.value = '';
                 authStatus.textContent = '';
@@ -1031,13 +1009,12 @@
             setTimeout(() => successDiv.remove(), 3000);
         }
 
-        // 데이터 로드 (Supabase에서)
+        // 데이터 로드
         async function loadData() {
             try {
                 console.log('Supabase에서 데이터 로드 시작');
                 showLoading();
                 
-                // 버킷 데이터 로드
                 const { data: bucketsData, error: bucketsError } = await supabase
                     .from('buckets')
                     .select('*')
@@ -1048,7 +1025,6 @@
                     throw new Error(`버킷 로드 오류: ${bucketsError.message}`);
                 }
 
-                // 액션 데이터 로드
                 let actionsData = [];
                 if (bucketsData.length > 0) {
                     const { data: actions, error: actionsError } = await supabase
@@ -1063,7 +1039,6 @@
                     actionsData = actions;
                 }
 
-                // 반복 규칙 데이터 로드
                 const { data: rulesData, error: rulesError } = await supabase
                     .from('recurring_rules')
                     .select('*')
@@ -1076,7 +1051,6 @@
                     recurringRules = rulesData;
                 }
 
-                // 데이터 병합
                 buckets = bucketsData.map(bucket => ({
                     ...bucket,
                     actions: actionsData.filter(action => action.bucket_id === bucket.id)
@@ -1085,7 +1059,6 @@
                 console.log('로드된 버킷 수:', buckets.length);
                 console.log('로드된 반복 규칙 수:', recurringRules.length);
                 
-                // 뷰 렌더링
                 if (currentView === 'buckets') {
                     renderBuckets();
                 } else if (currentView === 'stage') {
@@ -1110,14 +1083,12 @@
         function switchView(view) {
             currentView = view;
             
-            // 모든 탭 버튼 초기화
             bucketsViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             stageViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             todoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             recurringViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             memoViewBtn.className = 'px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             
-            // 모든 뷰 숨기기
             addBucketSection.classList.add('hidden');
             todoView.classList.add('hidden');
             memoView.classList.add('hidden');
@@ -1153,7 +1124,6 @@
 
         // 단계별 뷰 렌더링
         function renderStageView() {
-            // 단계별로 버킷 분류
             const stageMap = {
                 '대기': [],
                 '진행_광고제작': [],
@@ -1168,18 +1138,16 @@
                 }
             });
 
-            // 각 단계별로 렌더링
             renderStageColumn('대기', stageMap['대기'], waitingStage, waitingCount);
             renderStageColumn('진행_광고제작', stageMap['진행_광고제작'], creativeStage, creativeCount);
             renderStageColumn('진행_광고운영', stageMap['진행_광고운영'], operationStage, operationCount);
             renderStageColumn('진행_매출정산', stageMap['진행_매출정산'], settlementStage, settlementCount);
         }
 
-        // 단계별 컬럼 렌더링 (드래그 앤 드롭 지원)
+        // 단계별 컬럼 렌더링
         function renderStageColumn(stage, stageBuckets, container, countElement) {
             countElement.textContent = stageBuckets.length;
             
-            // 드롭 존 스타일 추가
             container.className = 'p-4 space-y-3 min-h-[400px] drop-zone';
             container.setAttribute('data-stage', stage);
             
@@ -1231,53 +1199,44 @@
                 }).join('');
             }
             
-            // 드래그 앤 드롭 이벤트 리스너 추가
             setupDragAndDropEvents(container);
         }
 
         // 드래그 앤 드롭 이벤트 설정
         function setupDragAndDropEvents(container) {
-            // 드래그 시작
             container.addEventListener('dragstart', (e) => {
                 if (e.target.classList.contains('bucket-card')) {
                     e.target.style.opacity = '0.5';
                     e.dataTransfer.setData('text/plain', e.target.dataset.bucketId);
                     e.dataTransfer.setData('source-stage', e.target.dataset.currentStage);
                     
-                    // 모든 드롭 존에 하이라이트 추가
                     document.querySelectorAll('.drop-zone').forEach(zone => {
                         zone.classList.add('drag-active');
                     });
                 }
             });
 
-            // 드래그 종료
             container.addEventListener('dragend', (e) => {
                 if (e.target.classList.contains('bucket-card')) {
                     e.target.style.opacity = '1';
                     
-                    // 모든 드롭 존에서 하이라이트 제거
                     document.querySelectorAll('.drop-zone').forEach(zone => {
                         zone.classList.remove('drag-active', 'drag-over');
                     });
                 }
             });
 
-            // 드래그 오버 (드롭 존 위를 지날 때)
             container.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 container.classList.add('drag-over');
             });
 
-            // 드래그 리브 (드롭 존을 벗어날 때)
             container.addEventListener('dragleave', (e) => {
-                // 컨테이너 밖으로 완전히 나갔을 때만 클래스 제거
                 if (!container.contains(e.relatedTarget)) {
                     container.classList.remove('drag-over');
                 }
             });
 
-            // 드롭 (놓을 때)
             container.addEventListener('drop', async (e) => {
                 e.preventDefault();
                 
@@ -1285,25 +1244,22 @@
                 const sourceStage = e.dataTransfer.getData('source-stage');
                 const targetStage = container.dataset.stage;
                 
-                // 같은 단계로 드롭하면 무시
                 if (sourceStage === targetStage) {
                     container.classList.remove('drag-over');
                     return;
                 }
                 
-                // 단계 변경 실행
                 await moveToStage(bucketId, targetStage);
                 
                 container.classList.remove('drag-over');
             });
         }
 
-        // 드래그로 단계 이동하는 함수 (자동 액션아이템 생성 포함)
+        // 단계 이동 (액션아이템 자동 생성 제거)
         async function moveToStage(bucketId, newStage) {
             try {
                 showLoading();
                 
-                // Supabase에서 단계 업데이트
                 const { error: bucketError } = await supabase
                     .from('buckets')
                     .update({ stage: newStage })
@@ -1314,50 +1270,14 @@
                     throw new Error(`단계 변경 오류: ${bucketError.message}`);
                 }
 
-                // 로컬 상태에서 버킷 찾기
                 const bucket = buckets.find(b => b.id === bucketId);
                 if (bucket) {
                     bucket.stage = newStage;
-                    
-                    // 기존 액션 아이템 유지하고 새 단계의 기본 액션 아이템 추가
-                    const existingActions = bucket.actions || [];
-                    const newDefaultActions = defaultActionItems[newStage] || [];
-                    
-                    // 새로 추가할 액션들 준비
-                    const actionsToAdd = [];
-                    newDefaultActions.forEach(actionText => {
-                        const exists = existingActions.some(action => action.text === actionText);
-                        if (!exists) {
-                            actionsToAdd.push({
-                                bucket_id: bucketId,
-                                text: actionText,
-                                completed: false,
-                                deadline: null,
-                                order_index: existingActions.length + actionsToAdd.length
-                            });
-                        }
-                    });
-                    
-                    // Supabase에 새 액션들 추가
-                    if (actionsToAdd.length > 0) {
-                        const { data: newActions, error: actionsError } = await supabase
-                            .from('actions')
-                            .insert(actionsToAdd)
-                            .select();
-
-                        if (actionsError) {
-                            throw new Error(`액션 아이템 추가 오류: ${actionsError.message}`);
-                        }
-
-                        // 로컬 상태에 새 액션들 추가
-                        bucket.actions = [...existingActions, ...newActions];
-                    }
                 }
                 
                 hideLoading();
                 renderStageView();
                 
-                // 단계 이름 변환
                 const stageNames = {
                     '대기': '대기',
                     '진행_광고제작': '광고제작',
@@ -1370,23 +1290,18 @@
                 console.error('단계 변경 오류:', error);
                 hideLoading();
                 alert('오류가 발생했습니다: ' + error.message);
-                // 오류 발생 시 뷰 새로고침
                 renderStageView();
             }
         }
 
-        // 기존 updateStageFromSelect 함수도 moveToStage 사용하도록 수정
         async function updateStageFromSelect(bucketId, newStage) {
             await moveToStage(bucketId, newStage);
         }
 
-        // 버킷 뷰로 전환하면서 특정 버킷 강조
         function switchToBucketView(bucketId) {
             switchView('buckets');
-            // 버킷 강조 효과는 선택사항
         }
 
-        // 단계별 뷰에서 단계 변경
         function changeStageInStageView(bucketId, event) {
             event.stopPropagation();
             
@@ -1448,7 +1363,6 @@
             }
         }
 
-        // 버킷 뷰에서 완료된 액션아이템 가시성 토글
         function toggleBucketCompletedVisibility() {
             showCompletedInBuckets = !showCompletedInBuckets;
             
@@ -1506,7 +1420,7 @@
             contractTermsInput.value = '';
         }
 
-        // 새 버킷 추가 (Supabase에 저장) - 기본 액션아이템 생성 포함
+        // 새 버킷 추가 (액션아이템 자동 생성 제거)
         async function addBucket() {
             const name = bucketNameInput.value.trim();
             if (!name) {
@@ -1517,7 +1431,6 @@
             try {
                 showLoading();
 
-                // 버킷 데이터 준비
                 const bucketData = {
                     user_id: userId,
                     name: name,
@@ -1528,7 +1441,6 @@
                     contract_terms: contractTermsInput.value.trim()
                 };
 
-                // Supabase에 버킷 저장
                 const { data: newBucket, error: bucketError } = await supabase
                     .from('buckets')
                     .insert([bucketData])
@@ -1539,27 +1451,7 @@
                     throw new Error(`버킷 생성 오류: ${bucketError.message}`);
                 }
 
-                // 기본 액션 아이템들 생성
-                const defaultActions = defaultActionItems['대기'].map((action, index) => ({
-                    bucket_id: newBucket.id,
-                    text: action,
-                    completed: false,
-                    deadline: null,
-                    order_index: index
-                }));
-
-                // Supabase에 액션 아이템들 저장
-                const { data: newActions, error: actionsError } = await supabase
-                    .from('actions')
-                    .insert(defaultActions)
-                    .select();
-
-                if (actionsError) {
-                    throw new Error(`액션 아이템 생성 오류: ${actionsError.message}`);
-                }
-
-                // 로컬 상태 업데이트
-                newBucket.actions = newActions;
+                newBucket.actions = [];
                 buckets.unshift(newBucket);
                 
                 hideLoading();
@@ -1723,10 +1615,10 @@
                 </div>
 
                 ${!isCollapsed ? `
-                    <!-- 단계 선택 (자동 액션아이템 생성 포함) -->
+                    <!-- 단계 선택 -->
                     <div class="mb-3">
                         <label class="block text-xs font-medium text-gray-700 mb-1">단계</label>
-                        <select onchange="changeStageWithActions(${bucket.id}, this.value)" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <select onchange="changeStage(${bucket.id}, this.value)" class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                             <option value="대기" ${bucket.stage === '대기' ? 'selected' : ''}>대기</option>
                             <option value="진행_광고제작" ${bucket.stage === '진행_광고제작' ? 'selected' : ''}>진행_광고제작</option>
                             <option value="진행_광고운영" ${bucket.stage === '진행_광고운영' ? 'selected' : ''}>진행_광고운영</option>
@@ -1875,7 +1767,6 @@
             if (!newName.trim()) return;
             
             try {
-                // Supabase 업데이트
                 const { error } = await supabase
                     .from('buckets')
                     .update({ name: newName.trim() })
@@ -1886,7 +1777,6 @@
                     throw new Error(`버킷 이름 수정 오류: ${error.message}`);
                 }
 
-                // 로컬 상태 업데이트
                 const bucket = buckets.find(b => b.id === bucketId);
                 if (bucket) {
                     bucket.name = newName.trim();
@@ -1915,7 +1805,6 @@
             if (!newText.trim()) return;
             
             try {
-                // Supabase 업데이트
                 const { error } = await supabase
                     .from('actions')
                     .update({ text: newText.trim() })
@@ -1925,7 +1814,6 @@
                     throw new Error(`액션 아이템 수정 오류: ${error.message}`);
                 }
 
-                // 로컬 상태 업데이트
                 buckets.forEach(bucket => {
                     const action = bucket.actions?.find(a => a.id === actionId);
                     if (action) {
@@ -1949,7 +1837,6 @@
 
         async function updateBucketInfo(bucketId, field, value) {
             try {
-                // Supabase 업데이트
                 const { error } = await supabase
                     .from('buckets')
                     .update({ [field]: value })
@@ -1960,7 +1847,6 @@
                     throw new Error(`버킷 정보 수정 오류: ${error.message}`);
                 }
 
-                // 로컬 상태 업데이트
                 const bucket = buckets.find(b => b.id === bucketId);
                 if (bucket) {
                     bucket[field] = value;
@@ -1971,10 +1857,9 @@
             }
         }
 
-        // 단계 변경 (자동 액션아이템 생성 포함) - 버킷 뷰용
-        async function changeStageWithActions(bucketId, newStage) {
+        async function changeStage(bucketId, newStage) {
             await moveToStage(bucketId, newStage);
-            renderBuckets(); // 버킷 뷰 재렌더링
+            renderBuckets();
         }
 
         async function addCustomAction(bucketId) {
@@ -1985,14 +1870,16 @@
                 const bucket = buckets.find(b => b.id === bucketId);
                 if (!bucket) return;
 
-                // Supabase에 새 액션 추가
+                // 오늘 날짜 자동 설정
+                const today = new Date().toISOString().split('T')[0];
+
                 const { data: newAction, error } = await supabase
                     .from('actions')
                     .insert([{
                         bucket_id: bucketId,
                         text: text.trim(),
                         completed: false,
-                        deadline: null,
+                        deadline: today,  // 오늘 날짜 자동 설정
                         order_index: bucket.actions.length
                     }])
                     .select()
@@ -2002,7 +1889,6 @@
                     throw new Error(`액션 아이템 추가 오류: ${error.message}`);
                 }
 
-                // 로컬 상태 업데이트
                 bucket.actions.push(newAction);
                 
                 renderBuckets();
@@ -2023,7 +1909,6 @@
 
                 const newCompleted = !action.completed;
 
-                // Supabase 업데이트
                 const { error } = await supabase
                     .from('actions')
                     .update({ completed: newCompleted })
@@ -2033,7 +1918,6 @@
                     throw new Error(`액션 아이템 상태 변경 오류: ${error.message}`);
                 }
 
-                // 로컬 상태 업데이트
                 action.completed = newCompleted;
                 
                 if (currentView === 'buckets') {
@@ -2057,7 +1941,6 @@
                 
                 if (!action) return;
 
-                // Supabase 업데이트
                 const { error } = await supabase
                     .from('actions')
                     .update({ deadline: deadline || null })
@@ -2067,7 +1950,6 @@
                     throw new Error(`마감일 설정 오류: ${error.message}`);
                 }
 
-                // 로컬 상태 업데이트
                 action.deadline = deadline || null;
                 
                 updateTodayDeadlines();
@@ -2089,7 +1971,6 @@
             if (!confirm('이 액션아이템을 삭제하시겠습니까?')) return;
 
             try {
-                // Supabase에서 삭제
                 const { error } = await supabase
                     .from('actions')
                     .delete()
@@ -2099,7 +1980,6 @@
                     throw new Error(`액션 아이템 삭제 오류: ${error.message}`);
                 }
 
-                // 로컬 상태 업데이트
                 const bucket = buckets.find(b => b.id === bucketId);
                 if (bucket && bucket.actions) {
                     bucket.actions = bucket.actions.filter(a => a.id !== actionId);
@@ -2124,7 +2004,6 @@
             if (!confirm('정말로 이 프로젝트를 삭제하시겠습니까?\n모든 액션아이템도 함께 삭제됩니다.')) return;
 
             try {
-                // Supabase에서 버킷 삭제 (CASCADE로 액션들도 자동 삭제됨)
                 const { error } = await supabase
                     .from('buckets')
                     .delete()
@@ -2135,7 +2014,6 @@
                     throw new Error(`버킷 삭제 오류: ${error.message}`);
                 }
 
-                // 로컬 상태 업데이트
                 buckets = buckets.filter(b => b.id !== bucketId);
                 
                 if (currentView === 'buckets') {
@@ -2155,6 +2033,9 @@
         function showAddTodoForm() {
             addTodoForm.classList.remove('hidden');
             updateTodoBucketSelect();
+            // 오늘 날짜 자동 설정
+            const today = new Date().toISOString().split('T')[0];
+            todoDeadlineInput.value = today;
             todoTextInput.focus();
         }
 
@@ -2194,7 +2075,6 @@
                 const bucket = buckets.find(b => b.id === bucketId);
                 if (!bucket) return;
 
-                // Supabase에 새 액션 추가
                 const { data: newAction, error } = await supabase
                     .from('actions')
                     .insert([{
@@ -2211,7 +2091,6 @@
                     throw new Error(`액션 아이템 추가 오류: ${error.message}`);
                 }
 
-                // 로컬 상태 업데이트
                 bucket.actions.push(newAction);
                 
                 hideAddTodoForm();
@@ -2224,7 +2103,7 @@
             }
         }
 
-        // 반복 규칙 관련 함수들
+        // 반복 규칙 관련 함수들 (이어서...)
         function showAddRecurringForm() {
             addRecurringForm.classList.remove('hidden');
             updateRuleBucketSelect();
@@ -2282,7 +2161,6 @@
             try {
                 showLoading();
 
-                // 반복 설정 구성
                 let repeatConfig = { hour: parseInt(createTime.split(':')[0]), minute: parseInt(createTime.split(':')[1]) };
                 
                 if (repeatType === 'weekly') {
@@ -2307,7 +2185,6 @@
                 };
 
                 if (editingRule) {
-                    // 수정
                     const { error } = await supabase
                         .from('recurring_rules')
                         .update(ruleData)
@@ -2318,7 +2195,6 @@
                         throw new Error(`반복 규칙 수정 오류: ${error.message}`);
                     }
 
-                    // 로컬 상태 업데이트
                     const ruleIndex = recurringRules.findIndex(r => r.id === editingRule);
                     if (ruleIndex !== -1) {
                         recurringRules[ruleIndex] = { ...recurringRules[ruleIndex], ...ruleData };
@@ -2326,7 +2202,6 @@
 
                     showSuccess('반복 규칙이 수정되었습니다!');
                 } else {
-                    // 새 규칙 추가
                     const { data: newRule, error } = await supabase
                         .from('recurring_rules')
                         .insert([ruleData])
@@ -2432,11 +2307,9 @@
 
             editingRule = ruleId;
             
-            // 폼 표시
             addRecurringForm.classList.remove('hidden');
             updateRuleBucketSelect();
             
-            // 기존 데이터로 폼 채우기
             ruleNameInput.value = rule.rule_name;
             ruleBucketSelect.value = rule.bucket_id;
             ruleActionInput.value = rule.action_template;
@@ -2452,7 +2325,6 @@
             endDateInput.value = rule.end_date || '';
             ruleStatusSelect.value = rule.is_active ? 'active' : 'inactive';
             
-            // 반복 타입에 따른 추가 설정
             weeklyDayContainer.classList.add('hidden');
             monthlyDateContainer.classList.add('hidden');
             
@@ -2464,7 +2336,6 @@
                 monthlyDateSelect.value = config.date || 1;
             }
             
-            // 마감일 타입에 따른 설정
             if (rule.deadline_type === 'days_after') {
                 deadlineDaysContainer.classList.remove('hidden');
             }
@@ -2525,38 +2396,30 @@
 
         // 반복 규칙 체크 및 실행
         function startRecurringCheck() {
-            // 1분마다 반복 규칙 체크
             setInterval(checkRecurringRules, 60000);
-            // 즉시 한 번 체크
             checkRecurringRules();
         }
 
         async function checkRecurringRules() {
             const now = new Date();
             const currentDate = now.toISOString().split('T')[0];
-            const currentTime = now.getHours() * 60 + now.getMinutes(); // 분 단위
+            const currentTime = now.getHours() * 60 + now.getMinutes();
 
             for (const rule of recurringRules) {
                 if (!rule.is_active) continue;
                 
-                // 종료일 체크
                 if (rule.end_date && currentDate > rule.end_date) continue;
                 
-                // 시작일 체크
                 if (currentDate < rule.start_date) continue;
                 
-                // 오늘 이미 생성되었는지 체크
                 if (rule.last_generated === currentDate) continue;
                 
-                // 시간 체크
                 const config = rule.repeat_config || {};
                 const ruleTime = (config.hour || 9) * 60 + (config.minute || 0);
                 const timeDiff = Math.abs(currentTime - ruleTime);
                 
-                // 1분 오차 허용
                 if (timeDiff > 1) continue;
                 
-                // 반복 타입별 조건 체크
                 let shouldGenerate = false;
                 
                 if (rule.repeat_type === 'daily') {
@@ -2582,7 +2445,6 @@
                 const bucket = buckets.find(b => b.id === rule.bucket_id);
                 if (!bucket) return;
 
-                // 마감일 계산
                 let deadline = null;
                 const currentDateObj = new Date(currentDate);
                 
@@ -2602,7 +2464,6 @@
                         deadline = null;
                 }
 
-                // 새 액션 아이템 생성
                 const newAction = {
                     bucket_id: rule.bucket_id,
                     text: `${rule.action_template} (${currentDate})`,
@@ -2612,7 +2473,6 @@
                     order_index: bucket.actions.length
                 };
 
-                // Supabase에 저장
                 const { data: createdAction, error: actionError } = await supabase
                     .from('actions')
                     .insert([newAction])
@@ -2623,7 +2483,6 @@
                     throw new Error(`반복 액션 생성 오류: ${actionError.message}`);
                 }
 
-                // 마지막 생성일 업데이트
                 const { error: ruleError } = await supabase
                     .from('recurring_rules')
                     .update({ last_generated: currentDate })
@@ -2633,11 +2492,9 @@
                     console.error('반복 규칙 업데이트 오류:', ruleError);
                 }
 
-                // 로컬 상태 업데이트
                 bucket.actions.push(createdAction);
                 rule.last_generated = currentDate;
 
-                // 현재 뷰 업데이트
                 if (currentView === 'buckets') {
                     renderBuckets();
                 } else if (currentView === 'stage') {
@@ -2685,35 +2542,29 @@
                     filteredItems = allItems.filter(item => item.완료여부 === '미완료');
                 }
 
-                // 워크시트 생성
                 const ws = XLSX.utils.json_to_sheet(filteredItems);
 
-                // 열 너비 설정
                 const colWidths = [
-                    { wch: 10 }, // 광고주ID
-                    { wch: 20 }, // 광고주명
-                    { wch: 30 }, // 액션아이템
-                    { wch: 12 }, // 마감일자
-                    { wch: 10 }, // 완료여부
-                    { wch: 10 }  // 반복작업
+                    { wch: 10 },
+                    { wch: 20 },
+                    { wch: 30 },
+                    { wch: 12 },
+                    { wch: 10 },
+                    { wch: 10 }
                 ];
                 ws['!cols'] = colWidths;
 
-                // 워크북 생성
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, '액션아이템 목록');
 
-                // 파일명 생성 (현재 날짜 포함)
                 const today = new Date();
                 const dateString = today.getFullYear() + '-' + 
                     String(today.getMonth() + 1).padStart(2, '0') + '-' + 
                     String(today.getDate()).padStart(2, '0');
                 const filename = `광고프로젝트_액션아이템_${dateString}.xlsx`;
 
-                // 파일 다운로드
                 XLSX.writeFile(wb, filename);
 
-                // 다운로드 완료 알림
                 showSuccess('엑셀 파일이 다운로드되었습니다!');
 
             } catch (error) {
@@ -2725,14 +2576,13 @@
         // 메모장 기능
         async function loadMemo() {
             try {
-                // Supabase에서 메모 로드
                 const { data: memoData, error } = await supabase
                     .from('memos')
                     .select('content')
                     .eq('user_id', userId)
                     .single();
 
-                if (error && error.code !== 'PGRST116') { // PGRST116 = 데이터 없음
+                if (error && error.code !== 'PGRST116') {
                     throw new Error(`메모 로드 오류: ${error.message}`);
                 }
 
@@ -2754,7 +2604,6 @@
             try {
                 const memoContent = memoTextarea.value;
                 
-                // Supabase에 메모 저장 (upsert 사용)
                 const { error } = await supabase
                     .from('memos')
                     .upsert([{
@@ -2782,7 +2631,6 @@
             if (!confirm('정말로 모든 메모를 삭제하시겠습니까?')) return;
 
             try {
-                // Supabase에서 메모 삭제
                 const { error } = await supabase
                     .from('memos')
                     .delete()
@@ -2811,7 +2659,6 @@
                 try {
                     const memoContent = memoTextarea.value;
                     
-                    // Supabase에 자동 저장
                     const { error } = await supabase
                         .from('memos')
                         .upsert([{
@@ -2831,7 +2678,7 @@
                     console.error('자동 저장 오류:', error);
                     memoStatus.textContent = '자동 저장 실패';
                 }
-            }, 2000); // 2초 후 자동 저장
+            }, 2000);
         }
 
         // 페이지 로드시 앱 초기화
